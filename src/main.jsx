@@ -5,6 +5,17 @@ import './styles.css';
 import './recs.css';
 import './feedback-fixes.css';
 
+try {
+  const savedUser = JSON.parse(localStorage.getItem('parklink-user') || 'null');
+  if (savedUser && !savedUser.email) {
+    localStorage.removeItem('parklink-user');
+    sessionStorage.removeItem('parklink-login-otp');
+    sessionStorage.removeItem('parklink-pending-user');
+  }
+} catch {
+  localStorage.removeItem('parklink-user');
+}
+
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
