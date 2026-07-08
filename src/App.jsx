@@ -45,15 +45,6 @@ const mobilityItems = [
   { icon: Layers, title: 'Skateboard storage', text: 'Concept tracking for campus-friendly board parking areas.' }
 ];
 
-const recLocations = [
-  { id: 'cpp', name: 'Cal Poly Pomona', area: 'Campus lots', bestLot: 'Lot A / Structure B', keywords: 'cpp cal poly pomona campus bronco lot structure', base: 72, walk: '3-6 min', price: 'Free-$2/hr', reason: 'best for student parking and ParkLink module testing' },
-  { id: 'delamo', name: 'Del Amo Fashion Center', area: 'Mall parking', bestLot: 'North structure', keywords: 'del amo mall torrance shopping fashion center', base: 78, walk: '2-5 min', price: 'Free', reason: 'good turnover and multiple structure entrances' },
-  { id: 'torrance', name: 'Downtown Torrance', area: 'Street parking', bestLot: 'Sartori / El Prado area', keywords: 'torrance downtown street parking old town', base: 62, walk: '4-8 min', price: 'Free-metered', reason: 'good for street module and sweeper scheduling demos' },
-  { id: 'lbairport', name: 'Long Beach Airport', area: 'Airport parking', bestLot: 'Cell phone / short term area', keywords: 'long beach airport lgb airport parking', base: 58, walk: '5-10 min', price: '$2-$4/hr', reason: 'useful airport flow and short-term parking test area' },
-  { id: 'beach', name: 'Redondo Beach Pier', area: 'Beach parking', bestLot: 'Pier garage', keywords: 'redondo beach pier ocean parking', base: 54, walk: '6-12 min', price: '$2+/hr', reason: 'good for high-demand event and weekend predictions' },
-  { id: 'carson', name: 'City of Carson Civic Center', area: 'Civic parking', bestLot: 'City hall surface lot', keywords: 'carson city hall civic center parking', base: 69, walk: '2-6 min', price: 'Free', reason: 'clean city pilot style use case' }
-];
-
 function formatPhone(value) {
   const digits = value.replace(/[^0-9]/g, '').slice(0, 10);
   const a = digits.slice(0, 3);
@@ -81,20 +72,81 @@ function isValidTimeRange(arrival, departure) {
   return getHour(departure) > getHour(arrival);
 }
 
-function predictAvailability(location, arrival, departure) {
+function predictAvailabilityByTime(arrival, departure, distanceMiles = 0.4, capacity = 30) {
+  if (!isValidTimeRange(arrival, departure)) return 0;
   const arrivalHour = getHour(arrival);
   const duration = Math.max(0.5, getHour(departure) - arrivalHour);
-  let score = location.base;
-  if (!isValidTimeRange(arrival, departure)) return 0;
-  if (arrivalHour >= 7 && arrivalHour <= 10) score -= 18;
-  if (arrivalHour >= 11 && arrivalHour <= 14) score -= 10;
-  if (arrivalHour >= 17 && arrivalHour <= 20) score -= 14;
+  let score = 74;
+  if (arrivalHour >= 7 && arrivalHour <= 10) score -= 19;
+  if (arrivalHour >= 11 && arrivalHour <= 14) score -= 11;
+  if (arrivalHour >= 17 && arrivalHour <= 20) score -= 15;
   if (arrivalHour >= 21 || arrivalHour <= 6) score += 12;
-  if (duration > 3) score -= 7;
-  if (location.id === 'beach' && arrivalHour >= 11 && arrivalHour <= 16) score -= 12;
-  if (location.id === 'delamo' && arrivalHour >= 16 && arrivalHour <= 19) score -= 9;
-  if (location.id === 'cpp' && arrivalHour >= 8 && arrivalHour <= 11) score -= 11;
+  if (duration > 3) score -= 8;
+  if (distanceMiles > 0.8) score += 8;
+  if (distanceMiles < 0.15) score -= 8;
+  if (capacity > 80) score += 8;
+  if (capacity < 15) score -= 6;
   return Math.max(18, Math.min(96, Math.round(score)));
+}
+
+function busyLabel(score) {
+  if (score >= 70) return 'Likely open';
+  if (score >= 45) return 'Moderate demand';
+  return 'Likely busy';
+}
+
+function distanceMiles(lat1, lon1, lat2, lon2) {
+  const radius = 3958.8;
+  const toRad = (value) => (value * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function geocodePlace(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+  if (!response.ok) throw new Error('Location search failed.');
+  const results = await response.json();
+  if (!results.length) throw new Error('No location found. Try a more specific search.');
+  return {
+    name: results[0].display_name,
+    lat: Number(results[0].lat),
+    lng: Number(results[0].lon)
+  };
+}
+
+async function fetchParkingNear(lat, lng) {
+  const query = `[out:json][timeout:18];(
+    node["amenity"="parking"](around:1400,${lat},${lng});
+    way["amenity"="parking"](around:1400,${lat},${lng});
+    relation["amenity"="parking"](around:1400,${lat},${lng});
+  );out center tags 24;`;
+  const response = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body: query
+  });
+  if (!response.ok) throw new Error('Parking search failed.');
+  const data = await response.json();
+  return data.elements.map((item, index) => {
+    const itemLat = item.lat ?? item.center?.lat;
+    const itemLng = item.lon ?? item.center?.lon;
+    const distance = itemLat && itemLng ? distanceMiles(lat, lng, itemLat, itemLng) : 0.4 + index * 0.1;
+    const capacity = Number(item.tags?.capacity || item.tags?.['capacity:disabled'] || 30);
+    return {
+      id: `${item.type}-${item.id}`,
+      name: item.tags?.name || item.tags?.operator || `Parking option ${index + 1}`,
+      area: item.tags?.parking ? `${item.tags.parking} parking` : 'Public parking',
+      bestLot: item.tags?.access === 'private' ? 'Private / verify access' : 'OpenStreetMap parking area',
+      distance,
+      capacity,
+      price: item.tags?.fee === 'yes' ? 'May require payment' : item.tags?.fee === 'no' ? 'Marked free' : 'Fee unknown',
+      walk: `${Math.max(2, Math.round(distance * 18))} min walk`,
+      reason: item.tags?.access === 'private' ? 'Listed near your destination, but access may be restricted.' : 'Found from live OpenStreetMap parking data near your destination.'
+    };
+  }).sort((a, b) => a.distance - b.distance).slice(0, 8);
 }
 
 function getReservation(spotId, reservations) {
@@ -202,24 +254,42 @@ function MobilityTab() {
 }
 
 function AiRecommendationCard({ location, arrival, departure }) {
-  const availability = predictAvailability(location, arrival, departure);
+  const availability = location.availability ?? predictAvailabilityByTime(arrival, departure, location.distance, location.capacity);
   const level = availability >= 70 ? 'good' : availability >= 45 ? 'medium' : 'low';
-  return <div className={`ai-result-card glass-card ${level}`}><div className="ai-score-ring"><strong>{availability}%</strong><span>open</span></div><div className="ai-result-main"><strong>{location.name}</strong><span>{location.area} • {location.bestLot}</span><small>{location.reason}</small><div className="ai-meta-row"><em>{location.walk}</em><em>{location.price}</em></div></div></div>;
+  return <div className={`ai-result-card glass-card ${level}`}><div className="ai-score-ring"><strong>{availability}%</strong><span>{busyLabel(availability)}</span></div><div className="ai-result-main"><strong>{location.name}</strong><span>{location.area} • {location.bestLot}</span><small>{location.reason}</small><div className="ai-meta-row"><em>{location.walk}</em><em>{location.price}</em><em>{location.distance?.toFixed ? `${location.distance.toFixed(1)} mi` : 'nearby'}</em></div></div></div>;
 }
 
 function FutureDataTab() {
   const [locationQuery, setLocationQuery] = useState('Cal Poly Pomona');
   const [arrival, setArrival] = useState('10:30');
   const [departure, setDeparture] = useState('12:00');
-  const [searched, setSearched] = useState('Cal Poly Pomona');
+  const [searchedPlace, setSearchedPlace] = useState(null);
+  const [realResults, setRealResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
   const validTime = isValidTimeRange(arrival, departure);
-  const filteredLocations = useMemo(() => {
-    const query = searched.trim().toLowerCase();
-    const matches = recLocations.filter((location) => !query || location.name.toLowerCase().includes(query) || location.area.toLowerCase().includes(query) || location.keywords.includes(query));
-    return (matches.length ? matches : recLocations).map((location) => ({ ...location, availability: predictAvailability(location, arrival, departure) })).sort((a, b) => b.availability - a.availability);
-  }, [searched, arrival, departure]);
-  const best = filteredLocations[0];
-  return <section className="settings-list tab-content"><div className="profile-card glass-card"><Database size={34} /><div><p className="eyebrow">AI recommendations</p><h2>Search a destination</h2><span>Mock predictions for where parking should work best.</span></div></div><div className="ai-search-card glass-card"><label className="input-label" htmlFor="ai-location">Specific location</label><div className="input-row"><Search size={18} /><input id="ai-location" placeholder="Try Del Amo, Torrance, CPP..." value={locationQuery} onChange={(event) => setLocationQuery(event.target.value)} /></div><div className="time-grid"><label><span>Arrival time</span><input type="time" value={arrival} onChange={(event) => setArrival(event.target.value)} /></label><label><span>Leave time</span><input type="time" value={departure} onChange={(event) => setDeparture(event.target.value)} /></label></div>{!validTime && <p className="error-text">Leave time has to be after arrival time.</p>}<button className="primary-button" disabled={!validTime} onClick={() => setSearched(locationQuery)}>Find recommendations</button></div><div className="data-grid"><StatCard icon={Clock} label="Arrival" value={arrival} detail="Adjusted by you" /><StatCard icon={Sparkles} label="Best pick" value={`${best?.availability || 0}%`} detail={best?.name || 'Search first'} /></div><div className="ai-results-list">{filteredLocations.map((location) => <AiRecommendationCard key={location.id} location={location} arrival={arrival} departure={departure} />)}</div><div className="setting-row glass-card"><Waves size={20} /><div><strong>Availability by area</strong><span>Prototype prediction only. Real accuracy needs live module history, events, traffic, and backend data.</span></div></div></section>;
+  const rankedResults = useMemo(() => realResults.map((location) => ({ ...location, availability: predictAvailabilityByTime(arrival, departure, location.distance, location.capacity) })).sort((a, b) => b.availability - a.availability), [realResults, arrival, departure]);
+  const best = rankedResults[0];
+
+  async function searchRealParking() {
+    if (!validTime) return;
+    setLoading(true);
+    setAiError('');
+    try {
+      const place = await geocodePlace(locationQuery);
+      const parking = await fetchParkingNear(place.lat, place.lng);
+      setSearchedPlace(place);
+      setRealResults(parking);
+      if (!parking.length) setAiError('I found the place, but OpenStreetMap did not list parking lots nearby. Try a broader place name.');
+    } catch (error) {
+      setAiError(error.message || 'Could not search parking right now.');
+      setRealResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return <section className="settings-list tab-content"><div className="profile-card glass-card"><Database size={34} /><div><p className="eyebrow">Real AI recommendations</p><h2>Search parking near a place</h2><span>Uses live OpenStreetMap search, then estimates how busy parking may be by time.</span></div></div><div className="ai-search-card glass-card"><label className="input-label" htmlFor="ai-location">Where are you going?</label><div className="input-row"><Search size={18} /><input id="ai-location" placeholder="Try Del Amo, CPP, LAX, Torrance City Hall..." value={locationQuery} onChange={(event) => setLocationQuery(event.target.value)} /></div><div className="time-grid"><label><span>Arrival time</span><input type="time" value={arrival} onChange={(event) => setArrival(event.target.value)} /></label><label><span>Leave time</span><input type="time" value={departure} onChange={(event) => setDeparture(event.target.value)} /></label></div>{!validTime && <p className="error-text">Leave time has to be after arrival time.</p>}<button className="primary-button" disabled={!validTime || loading} onClick={searchRealParking}>{loading ? <><LoaderCircle className="spin" size={18} /> Searching real map data...</> : <>Find real parking nearby <Search size={18} /></>}</button></div>{searchedPlace && <div className="setting-row glass-card"><MapPin size={20} /><div><strong>Showing results near</strong><span>{searchedPlace.name}</span></div></div>}{aiError && <p className="error-text reservation-warning">{aiError}</p>}<div className="data-grid"><StatCard icon={Clock} label="Arrival" value={arrival} detail="Adjusted by you" /><StatCard icon={Sparkles} label="Best option" value={best ? `${best.availability}%` : '--'} detail={best?.name || 'Search first'} /></div><div className="ai-results-list">{rankedResults.map((location) => <AiRecommendationCard key={location.id} location={location} arrival={arrival} departure={departure} />)}</div><div className="setting-row glass-card"><Waves size={20} /><div><strong>How real is this?</strong><span>The parking locations are live map data. The busy score is still an estimate until ParkLink has real historical sensor data and multi-user backend reservations.</span></div></div></section>;
 }
 
 function SettingsTab({ user, linkedUsers, onAddUser, onSaveProfile }) {
@@ -228,7 +298,7 @@ function SettingsTab({ user, linkedUsers, onAddUser, onSaveProfile }) {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone);
   function save() { onSaveProfile({ name: name.trim() || user.name, phone }); setEdit(false); }
-  return <section className="settings-list tab-content"><div className="profile-card glass-card"><UserRound size={34} /><div><p className="eyebrow">Signed in</p><h2>{user.name}</h2><span>{user.phone}</span></div><button className="mini-button" onClick={() => setEdit(!edit)}>Edit</button></div>{edit && <div className="device-card glass-card"><label className="input-label">Name</label><div className="input-row"><UserRound size={18} /><input value={name} onChange={(event) => setName(event.target.value)} /></div><label className="input-label">Phone</label><div className="input-row"><Phone size={18} /><input value={phone} onChange={(event) => setPhone(formatPhone(event.target.value))} /></div><button className="primary-button" onClick={save}>Save profile</button></div>}<div className="device-card glass-card"><div className="section-header"><div><p className="eyebrow">Device details</p><h2>This device</h2></div><Phone size={20} /></div><div className="device-row"><span>Device type</span><strong>Mobile web preview</strong></div><div className="device-row"><span>Reservation sync</span><strong>Local prototype only</strong></div><div className="device-row"><span>Backend needed</span><strong>Realtime multi-device</strong></div><div className="device-row"><span>App version</span><strong>ParkLink v0.3</strong></div></div><div className="users-card glass-card"><div className="section-header"><div><p className="eyebrow">Multiple users</p><h2>Linked users</h2></div><button className="mini-button" onClick={() => setShowAdd(!showAdd)}><Plus size={16} /> Add</button></div>{showAdd && <div className="add-user-panel"><p>Real linked users need accounts in the backend. For now this adds a demo linked device card.</p><button className="primary-button" onClick={onAddUser}>Add demo user</button></div>}{linkedUsers.map((person) => <div key={person.id} className="linked-user-row"><span>{person.initials}</span><div><strong>{person.name}</strong><small>{person.phone}</small></div></div>)}</div><div className="setting-row glass-card"><Navigation size={20} /><div><strong>Route preferences</strong><span>Open Google Maps when navigation starts.</span></div></div></section>;
+  return <section className="settings-list tab-content"><div className="profile-card glass-card"><UserRound size={34} /><div><p className="eyebrow">Signed in</p><h2>{user.name}</h2><span>{user.phone}</span></div><button className="mini-button" onClick={() => setEdit(!edit)}>Edit</button></div>{edit && <div className="device-card glass-card"><label className="input-label">Name</label><div className="input-row"><UserRound size={18} /><input value={name} onChange={(event) => setName(event.target.value)} /></div><label className="input-label">Phone</label><div className="input-row"><Phone size={18} /><input value={phone} onChange={(event) => setPhone(formatPhone(event.target.value))} /></div><button className="primary-button" onClick={save}>Save profile</button></div>}<div className="device-card glass-card"><div className="section-header"><div><p className="eyebrow">Device details</p><h2>This device</h2></div><Phone size={20} /></div><div className="device-row"><span>Device type</span><strong>Mobile web preview</strong></div><div className="device-row"><span>Reservation sync</span><strong>Local prototype only</strong></div><div className="device-row"><span>Backend needed</span><strong>Realtime multi-device</strong></div><div className="device-row"><span>App version</span><strong>ParkLink v0.4</strong></div></div><div className="users-card glass-card"><div className="section-header"><div><p className="eyebrow">Multiple users</p><h2>Linked users</h2></div><button className="mini-button" onClick={() => setShowAdd(!showAdd)}><Plus size={16} /> Add</button></div>{showAdd && <div className="add-user-panel"><p>Real linked users need accounts in the backend. For now this adds a demo linked device card.</p><button className="primary-button" onClick={onAddUser}>Add demo user</button></div>}{linkedUsers.map((person) => <div key={person.id} className="linked-user-row"><span>{person.initials}</span><div><strong>{person.name}</strong><small>{person.phone}</small></div></div>)}</div><div className="setting-row glass-card"><Navigation size={20} /><div><strong>Route preferences</strong><span>Open Google Maps when navigation starts.</span></div></div></section>;
 }
 
 function NotificationCenter({ onClose }) {
