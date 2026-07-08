@@ -24,7 +24,6 @@ import {
   Sparkles,
   Timer,
   UserRound,
-  Users,
   Waves,
   Zap
 } from 'lucide-react';
@@ -45,6 +44,15 @@ const mobilityItems = [
   { icon: Layers, title: 'Skateboard storage', text: 'Concept tracking for campus-friendly board parking areas.' }
 ];
 
+const recLocations = [
+  { id: 'cpp', name: 'Cal Poly Pomona', area: 'Campus lots', bestLot: 'Lot A / Structure B', keywords: 'cpp cal poly pomona campus bronco lot structure', base: 72, walk: '3-6 min', price: 'Free-$2/hr', reason: 'best for student parking and ParkLink module testing' },
+  { id: 'delamo', name: 'Del Amo Fashion Center', area: 'Mall parking', bestLot: 'North structure', keywords: 'del amo mall torrance shopping fashion center', base: 78, walk: '2-5 min', price: 'Free', reason: 'good turnover and multiple structure entrances' },
+  { id: 'torrance', name: 'Downtown Torrance', area: 'Street parking', bestLot: 'Sartori / El Prado area', keywords: 'torrance downtown street parking old town', base: 62, walk: '4-8 min', price: 'Free-metered', reason: 'good for street module and sweeper scheduling demos' },
+  { id: 'lbairport', name: 'Long Beach Airport', area: 'Airport parking', bestLot: 'Cell phone / short term area', keywords: 'long beach airport lgb airport parking', base: 58, walk: '5-10 min', price: '$2-$4/hr', reason: 'useful airport flow and short-term parking test area' },
+  { id: 'beach', name: 'Redondo Beach Pier', area: 'Beach parking', bestLot: 'Pier garage', keywords: 'redondo beach pier ocean parking', base: 54, walk: '6-12 min', price: '$2+/hr', reason: 'good for high-demand event and weekend predictions' },
+  { id: 'carson', name: 'City of Carson Civic Center', area: 'Civic parking', bestLot: 'City hall surface lot', keywords: 'carson city hall civic center parking', base: 69, walk: '2-6 min', price: 'Free', reason: 'clean city pilot style use case' }
+];
+
 function formatPhone(value) {
   const digits = value.replace(/[^0-9]/g, '').slice(0, 10);
   const a = digits.slice(0, 3);
@@ -63,6 +71,26 @@ function formatTime(ms) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
+function getHour(timeString) {
+  const [hour = '12', minute = '0'] = timeString.split(':');
+  return Number(hour) + Number(minute) / 60;
+}
+
+function predictAvailability(location, arrival, departure) {
+  const arrivalHour = getHour(arrival);
+  const duration = Math.max(0.5, getHour(departure) - arrivalHour);
+  let score = location.base;
+  if (arrivalHour >= 7 && arrivalHour <= 10) score -= 18;
+  if (arrivalHour >= 11 && arrivalHour <= 14) score -= 10;
+  if (arrivalHour >= 17 && arrivalHour <= 20) score -= 14;
+  if (arrivalHour >= 21 || arrivalHour <= 6) score += 12;
+  if (duration > 3) score -= 7;
+  if (location.id === 'beach' && arrivalHour >= 11 && arrivalHour <= 16) score -= 12;
+  if (location.id === 'delamo' && arrivalHour >= 16 && arrivalHour <= 19) score -= 9;
+  if (location.id === 'cpp' && arrivalHour >= 8 && arrivalHour <= 11) score -= 11;
+  return Math.max(18, Math.min(96, Math.round(score)));
+}
+
 function getReservation(spotId, reservations) {
   const reservation = reservations[spotId];
   if (!reservation) return null;
@@ -72,8 +100,7 @@ function getReservation(spotId, reservations) {
 
 function getSpotState(spot, reservations) {
   if (spot.status === 'Occupied') return 'occupied';
-  const reservation = getReservation(spot.id, reservations);
-  if (reservation) return 'mine';
+  if (getReservation(spot.id, reservations)) return 'mine';
   return 'available';
 }
 
@@ -154,22 +181,7 @@ function OtpScreen({ user, onComplete, onBack }) {
     }, 1100);
   }
 
-  return (
-    <PhoneFrame>
-      <main className="auth-shell phone-screen">
-        <section className="auth-card glass-card compact-card screen-pop">
-          <button className="ghost-button" onClick={onBack}><ArrowLeft size={18} /> Back</button>
-          <p className="eyebrow">Verify phone</p>
-          <h1>Enter code</h1>
-          <p className="muted">Prototype verification for <strong>{user.phone}</strong>.</p>
-          <input className="otp-input" placeholder="000000" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))} />
-          <div className="demo-code">Demo code: <strong>123456</strong></div>
-          {error && <p className="error-text">{error}</p>}
-          <button className="primary-button" disabled={code.length !== 6 || verifying} onClick={verifyCode}>{verifying ? <><LoaderCircle className="spin" size={18} /> Opening app...</> : <>Verify and open app <CheckCircle2 size={18} /></>}</button>
-        </section>
-      </main>
-    </PhoneFrame>
-  );
+  return <PhoneFrame><main className="auth-shell phone-screen"><section className="auth-card glass-card compact-card screen-pop"><button className="ghost-button" onClick={onBack}><ArrowLeft size={18} /> Back</button><p className="eyebrow">Verify phone</p><h1>Enter code</h1><p className="muted">Prototype verification for <strong>{user.phone}</strong>.</p><input className="otp-input" placeholder="000000" inputMode="numeric" maxLength={6} value={code} onChange={(event) => setCode(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))} /><div className="demo-code">Demo code: <strong>123456</strong></div>{error && <p className="error-text">{error}</p>}<button className="primary-button" disabled={code.length !== 6 || verifying} onClick={verifyCode}>{verifying ? <><LoaderCircle className="spin" size={18} /> Opening app...</> : <>Verify and open app <CheckCircle2 size={18} /></>}</button></section></main></PhoneFrame>;
 }
 
 function StatCard({ label, value, detail, icon: Icon }) {
@@ -181,26 +193,13 @@ function GridMap({ spots, reservations }) {
 }
 
 function RealMap({ spots, reservations }) {
-  return (
-    <section className="real-map-card glass-card">
-      <iframe title="ParkLink real map" className="real-map" src="https://www.openstreetmap.org/export/embed.html?bbox=-117.8295%2C34.0516%2C-117.8154%2C34.0618&layer=mapnik&marker=34.0562%2C-117.8211" />
-      <div className="map-overlay-list">
-        {spots.map((spot) => <div key={spot.id} className={`mini-map-row ${getSpotState(spot, reservations)}`}><strong>{spot.id}</strong><span>{spot.name}</span></div>)}
-      </div>
-    </section>
-  );
+  return <section className="real-map-card glass-card"><iframe title="ParkLink real map" className="real-map" src="https://www.openstreetmap.org/export/embed.html?bbox=-117.8295%2C34.0516%2C-117.8154%2C34.0618&layer=mapnik&marker=34.0562%2C-117.8211" /><div className="map-overlay-list">{spots.map((spot) => <div key={spot.id} className={`mini-map-row ${getSpotState(spot, reservations)}`}><strong>{spot.id}</strong><span>{spot.name}</span></div>)}</div></section>;
 }
 
 function SpotCard({ spot, reservations, onSelect, now }) {
   const state = getSpotState(spot, reservations);
   const reservation = getReservation(spot.id, reservations);
-  return (
-    <button className={`spot-card glass-card spot-${state}`} onClick={() => onSelect(spot.id)}>
-      <div className={`status-dot ${state}`} />
-      <div className="spot-main"><strong>{spot.name}</strong><span>{spot.type} • {spot.distance} • {spot.eta}</span>{reservation && <small className="reserved-line"><Timer size={13} /> {formatTime(reservation.expiresAt - now)} left</small>}</div>
-      <div className="spot-side"><span className={`tag ${state}-tag`}>{getStatusLabel(spot, reservations)}</span><ChevronRight size={18} /></div>
-    </button>
-  );
+  return <button className={`spot-card glass-card spot-${state}`} onClick={() => onSelect(spot.id)}><div className={`status-dot ${state}`} /><div className="spot-main"><strong>{spot.name}</strong><span>{spot.type} • {spot.distance} • {spot.eta}</span>{reservation && <small className="reserved-line"><Timer size={13} /> {formatTime(reservation.expiresAt - now)} left</small>}</div><div className="spot-side"><span className={`tag ${state}-tag`}>{getStatusLabel(spot, reservations)}</span><ChevronRight size={18} /></div></button>;
 }
 
 function HomeTab({ spots, reservations, user, onOpenSpot, now }) {
@@ -222,8 +221,25 @@ function MobilityTab() {
   return <section className="activity-card glass-card tab-content"><div className="section-header"><div><p className="eyebrow">Mobility hub</p><h2>Bikes, scooters, boards</h2></div></div>{mobilityItems.map(({ icon: Icon, title, text }) => <div className="activity-row" key={title}><Icon size={18} /><div><strong>{title}</strong><span>{text}</span></div></div>)}</section>;
 }
 
+function AiRecommendationCard({ location, arrival, departure }) {
+  const availability = predictAvailability(location, arrival, departure);
+  const level = availability >= 70 ? 'good' : availability >= 45 ? 'medium' : 'low';
+  return <div className={`ai-result-card glass-card ${level}`}><div className="ai-score-ring"><strong>{availability}%</strong><span>open</span></div><div className="ai-result-main"><strong>{location.name}</strong><span>{location.area} • {location.bestLot}</span><small>{location.reason}</small><div className="ai-meta-row"><em>{location.walk}</em><em>{location.price}</em></div></div></div>;
+}
+
 function FutureDataTab() {
-  return <section className="settings-list tab-content"><div className="profile-card glass-card"><Database size={34} /><div><p className="eyebrow">Future data</p><h2>ParkLink intelligence</h2><span>Mock analytics for pilots and city demos</span></div></div><div className="data-grid"><StatCard icon={Clock} label="Peak time" value="10:30a" detail="Predicted demand spike" /><StatCard icon={Waves} label="Sweeper risk" value="Low" detail="No route conflict" /></div><div className="setting-row glass-card"><Sparkles size={20} /><div><strong>AI recommendations</strong><span>Suggests lots based on time, event traffic, and past availability.</span></div></div><div className="setting-row glass-card"><Database size={20} /><div><strong>Pilot reports</strong><span>Future export for cities, campuses, malls, and airports.</span></div></div></section>;
+  const [locationQuery, setLocationQuery] = useState('Cal Poly Pomona');
+  const [arrival, setArrival] = useState('10:30');
+  const [departure, setDeparture] = useState('12:00');
+  const [searched, setSearched] = useState('Cal Poly Pomona');
+  const filteredLocations = useMemo(() => {
+    const query = searched.trim().toLowerCase();
+    const matches = recLocations.filter((location) => !query || location.name.toLowerCase().includes(query) || location.area.toLowerCase().includes(query) || location.keywords.includes(query));
+    return (matches.length ? matches : recLocations).map((location) => ({ ...location, availability: predictAvailability(location, arrival, departure) })).sort((a, b) => b.availability - a.availability);
+  }, [searched, arrival, departure]);
+  const best = filteredLocations[0];
+
+  return <section className="settings-list tab-content"><div className="profile-card glass-card"><Database size={34} /><div><p className="eyebrow">AI recommendations</p><h2>Search a destination</h2><span>Mock predictions for where parking should work best.</span></div></div><div className="ai-search-card glass-card"><label className="input-label" htmlFor="ai-location">Specific location</label><div className="input-row"><Search size={18} /><input id="ai-location" placeholder="Try Del Amo, Torrance, CPP..." value={locationQuery} onChange={(event) => setLocationQuery(event.target.value)} /></div><div className="time-grid"><label><span>Arrive</span><input type="time" value={arrival} onChange={(event) => setArrival(event.target.value)} /></label><label><span>Leave</span><input type="time" value={departure} onChange={(event) => setDeparture(event.target.value)} /></label></div><button className="primary-button" onClick={() => setSearched(locationQuery)}>Find recommendations</button></div><div className="data-grid"><StatCard icon={Clock} label="Best time" value={arrival} detail="Adjusted by you" /><StatCard icon={Sparkles} label="Best pick" value={best?.availability || 0 + '%'} detail={best?.name || 'Search first'} /></div><div className="ai-results-list">{filteredLocations.map((location) => <AiRecommendationCard key={location.id} location={location} arrival={arrival} departure={departure} />)}</div><div className="setting-row glass-card"><Waves size={20} /><div><strong>Availability by area</strong><span>These are prototype predictions. Later this should use real module history, live occupancy, event traffic, and time-of-day demand.</span></div></div></section>;
 }
 
 function SettingsTab({ user, linkedUsers, onAddUser }) {
@@ -236,7 +252,7 @@ const tabs = [
   { id: 'map', label: 'Map', icon: Map },
   { id: 'spaces', label: 'Spaces', icon: Layers },
   { id: 'mobility', label: 'Mobility', icon: Bike },
-  { id: 'data', label: 'Data', icon: Database },
+  { id: 'data', label: 'AI Recs', icon: Database },
   { id: 'settings', label: 'Settings', icon: Settings }
 ];
 
@@ -262,11 +278,7 @@ function SpotDetail({ spot, reservations, user, onBack, onReserveAction, action,
   const canReserve = state === 'available';
   const canUnreserve = state === 'mine';
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${spot.lat},${spot.lng}`;
-
-  function startNavigation() {
-    window.open(mapsUrl, '_blank', 'noopener,noreferrer');
-  }
-
+  function startNavigation() { window.open(mapsUrl, '_blank', 'noopener,noreferrer'); }
   return <PhoneFrame><main className="app-shell phone-screen detail-shell"><button className="ghost-button" onClick={onBack}><ArrowLeft size={18} /> Back</button><section className={`detail-hero glass-card detail-${state}`}><div className="detail-icon">{spot.type.includes('Bike') ? <Bike size={34} /> : <Car size={34} />}</div><p className="eyebrow">Module {spot.id}</p><h1>{spot.name}</h1><span className={`tag ${state}-tag`}>{getStatusLabel(spot, reservations)}</span><p>{spot.note}</p>{reservation && <div className="reservation-banner"><Timer size={18} /><span>Reserved for {user.name} • {formatTime(reservation.expiresAt - now)} left</span></div>}</section><section className="detail-grid"><div className="glass-card detail-tile"><MapPin size={20} /><span>Distance</span><strong>{spot.distance}</strong></div><div className="glass-card detail-tile"><Clock size={20} /><span>ETA</span><strong>{spot.eta}</strong></div><div className="glass-card detail-tile"><ShieldCheck size={20} /><span>Confidence</span><strong>{spot.confidence}%</strong></div></section><button className="primary-button big-action" disabled={!canReserve && !canUnreserve} onClick={() => onReserveAction(spot.id)}>{canUnreserve ? 'Unreserve spot' : canReserve ? 'Reserve for 5 minutes' : 'Unavailable'} <CheckCircle2 size={20} /></button><button className="primary-button big-action navigation-action" onClick={startNavigation}><Navigation size={20} /> Start navigation</button><ActionOverlay action={action} /></main></PhoneFrame>;
 }
 
