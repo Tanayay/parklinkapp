@@ -1,0 +1,126 @@
+.ai-search-card {
+  border-radius: 28px;
+  padding: 16px;
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.time-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.time-grid input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 13px 12px;
+  color: white;
+  background: rgba(255, 255, 255, 0.09);
+  outline: none;
+}
+
+.ai-results-list {
+  display: grid;
+  gap: 12px;
+}
+
+.ai-result-card {
+  border-radius: 24px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ai-result-card.good {
+  border-color: rgba(63, 245, 157, 0.34);
+  background: rgba(63, 245, 157, 0.1);
+}
+
+.ai-result-card.medium {
+  border-color: rgba(255, 209, 102, 0.35);
+  background: rgba(255, 209, 102, 0.09);
+}
+
+.ai-result-card.low {
+  border-color: rgba(255, 100, 124, 0.3);
+  background: rgba(255, 100, 124, 0.08);
+}
+
+.ai-score-ring {
+  width: 70px;
+  height: 70px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background: radial-gradient(circle, rgba(255,255,255,0.2), rgba(55,166,255,0.13));
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.ai-score-ring strong,
+.ai-score-ring span {
+  display: block;
+  text-align: center;
+  line-height: 1;
+}
+
+.ai-score-ring strong {
+  font-size: 1.1rem;
+}
+
+.ai-score-ring span {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ai-result-main {
+  flex: 1;
+}
+
+.ai-result-main strong,
+.ai-result-main span,
+.ai-result-main small {
+  display: block;
+}
+
+.ai-result-main span {
+  color: rgba(255,255,255,0.76);
+  font-size: 0.88rem;
+  margin-top: 3px;
+}
+
+.ai-result-main small {
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+.ai-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.ai-meta-row em {
+  font-style: normal;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #dff8ff;
+  background: rgba(107, 213, 255, 0.12);
+  border: 1px solid rgba(107, 213, 255, 0.18);
+}
