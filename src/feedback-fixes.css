@@ -1,0 +1,165 @@
+body {
+  line-height: 1.45;
+}
+
+.phone-screen.has-tabs {
+  padding-bottom: 114px !important;
+}
+
+.bottom-tabs {
+  position: absolute !important;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 20;
+  margin-top: 0 !important;
+  grid-template-columns: repeat(6, 1fr) !important;
+}
+
+.spot-type-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #001528;
+  background: var(--green);
+  box-shadow: 0 0 0 8px rgba(63, 245, 157, 0.1);
+}
+
+.spot-type-icon.occupied {
+  background: var(--red);
+  color: white;
+  box-shadow: 0 0 0 8px rgba(255, 100, 124, 0.1);
+}
+
+.spot-type-icon.mine {
+  background: var(--purple);
+  color: white;
+  box-shadow: 0 0 0 8px rgba(167, 139, 250, 0.12);
+}
+
+.mini-map-row strong {
+  color: white;
+}
+
+.mini-map-row.highlighted {
+  border-color: rgba(63, 245, 157, 0.65);
+  background: rgba(63, 245, 157, 0.16);
+  transform: scale(1.01);
+}
+
+.drop-pin {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  background: rgba(2, 8, 21, 0.75);
+  backdrop-filter: blur(14px);
+  border-radius: 999px;
+  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 900;
+}
+
+.drop-pin.active {
+  background: rgba(63, 245, 157, 0.18);
+  border-color: rgba(63, 245, 157, 0.5);
+}
+
+.notification-panel {
+  position: absolute;
+  top: 92px;
+  left: 14px;
+  right: 14px;
+  z-index: 25;
+  border-radius: 28px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.bell-button {
+  position: relative;
+}
+
+.bell-button span {
+  position: absolute;
+  right: 9px;
+  top: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--red);
+  box-shadow: 0 0 0 4px rgba(255, 100, 124, 0.18);
+}
+
+.parking-otp-card {
+  border-radius: 28px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.parking-otp-card h2 {
+  margin: 0;
+}
+
+.parking-otp-card p {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.verified-pill {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: rgba(63, 245, 157, 0.16);
+  color: #aafbd2;
+  font-weight: 900;
+}
+
+.reservation-warning {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 100, 124, 0.11);
+  border: 1px solid rgba(255, 100, 124, 0.18);
+}
+
+.activity-row span,
+.setting-row span,
+.spot-main span,
+.spot-main small,
+.ai-result-main small,
+.hero-card p,
+.parking-otp-card p,
+.add-user-panel p {
+  line-height: 1.5;
+}
+
+.profile-card {
+  justify-content: space-between;
+}
+
+.profile-card > div {
+  flex: 1;
+}
+
+@media (max-width: 500px) {
+  .bottom-tabs {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .tab-button span {
+    font-size: 0.55rem;
+  }
+}
