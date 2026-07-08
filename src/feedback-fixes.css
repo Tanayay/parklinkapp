@@ -3,15 +3,16 @@ body {
 }
 
 .phone-screen.has-tabs {
-  padding-bottom: 114px !important;
+  padding-bottom: 128px !important;
 }
 
 .bottom-tabs {
-  position: absolute !important;
-  left: 14px;
-  right: 14px;
-  bottom: 14px;
-  z-index: 20;
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 18px !important;
+  transform: translateX(-50%) !important;
+  width: min(390px, calc(100vw - 24px)) !important;
+  z-index: 60 !important;
   margin-top: 0 !important;
   grid-template-columns: repeat(6, 1fr) !important;
 }
@@ -154,9 +155,8 @@ body {
 
 @media (max-width: 500px) {
   .bottom-tabs {
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
+    bottom: 10px !important;
+    width: calc(100vw - 20px) !important;
   }
 
   .tab-button span {
