@@ -136,6 +136,17 @@ function makeOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+async function sendOtpEmail({ email, code, name }) {
+  const response = await fetch('/api/send-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, code })
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Could not send OTP email.');
+  return data;
+}
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -152,13 +163,7 @@ function AuthScreen({ onVerify }) {
     setError('');
     const code = makeOtp();
     try {
-      const response = await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), code })
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || 'Could not send OTP email.');
+      await sendOtpEmail({ name: name.trim(), email: email.trim(), code });
       sessionStorage.setItem('parklink-login-otp', code);
       await onVerify({ name: name.trim(), email: email.trim() });
     } catch (err) {
@@ -274,11 +279,11 @@ function SettingsTab({ user, linkedUsers, onAddUser, onSaveProfile, vehicles, on
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   function save() { onSaveProfile({ name: name.trim() || user.name, email }); setEdit(false); }
-  return <section className="settings-list tab-content"><div className="profile-card glass-card"><UserRound size={34} /><div><p className="eyebrow">Signed in</p><h2>{user.name}</h2><span>{user.email}</span></div><button className="mini-button" onClick={() => setEdit(!edit)}>Edit</button><button className="mini-button" onClick={onLogout}>Log out</button></div>{edit && <div className="device-card glass-card"><label className="input-label">Name</label><div className="input-row"><UserRound size={18} /><input value={name} onChange={(event) => setName(event.target.value)} /></div><label className="input-label">Email</label><div className="input-row"><ShieldCheck size={18} /><input value={email} onChange={(event) => setEmail(event.target.value)} /></div><button className="primary-button" onClick={save}>Save profile</button></div>}<VehicleManager vehicles={vehicles} onAddVehicle={onAddVehicle} /><div className="device-card glass-card"><div className="section-header"><div><p className="eyebrow">Device details</p><h2>This device</h2></div><ShieldCheck size={20} /></div><div className="device-row"><span>Login</span><strong>Email OTP</strong></div><div className="device-row"><span>Firebase</span><strong>{firebaseReady ? 'Connected' : 'Not configured'}</strong></div><div className="device-row"><span>Reservation sync</span><strong>{firebaseReady ? 'Realtime + fallback' : 'Local prototype only'}</strong></div><div className="device-row"><span>App version</span><strong>ParkLink v0.7</strong></div></div><div className="users-card glass-card"><div className="section-header"><div><p className="eyebrow">Multiple users</p><h2>Linked users</h2></div><button className="mini-button" onClick={() => setShowAdd(!showAdd)}><Plus size={16} /> Add</button></div>{showAdd && <div className="add-user-panel"><p>Real linked users need accounts in the backend. For now this adds a demo linked device card.</p><button className="primary-button" onClick={onAddUser}>Add demo user</button></div>}{linkedUsers.map((person) => <div key={person.id} className="linked-user-row"><span>{person.initials}</span><div><strong>{person.name}</strong><small>{person.email || person.phone}</small></div></div>)}</div></section>;
+  return <section className="settings-list tab-content"><div className="profile-card glass-card"><UserRound size={34} /><div><p className="eyebrow">Signed in</p><h2>{user.name}</h2><span>{user.email}</span></div><button className="mini-button" onClick={() => setEdit(!edit)}>Edit</button><button className="mini-button" onClick={onLogout}>Log out</button></div>{edit && <div className="device-card glass-card"><label className="input-label">Name</label><div className="input-row"><UserRound size={18} /><input value={name} onChange={(event) => setName(event.target.value)} /></div><label className="input-label">Email</label><div className="input-row"><ShieldCheck size={18} /><input value={email} onChange={(event) => setEmail(event.target.value)} /></div><button className="primary-button" onClick={save}>Save profile</button></div>}<VehicleManager vehicles={vehicles} onAddVehicle={onAddVehicle} /><div className="device-card glass-card"><div className="section-header"><div><p className="eyebrow">Device details</p><h2>This device</h2></div><ShieldCheck size={20} /></div><div className="device-row"><span>Login</span><strong>Email OTP</strong></div><div className="device-row"><span>Firebase</span><strong>{firebaseReady ? 'Connected' : 'Not configured'}</strong></div><div className="device-row"><span>Reservation sync</span><strong>{firebaseReady ? 'Realtime + fallback' : 'Local prototype only'}</strong></div><div className="device-row"><span>App version</span><strong>ParkLink v0.8</strong></div></div><div className="users-card glass-card"><div className="section-header"><div><p className="eyebrow">Multiple users</p><h2>Linked users</h2></div><button className="mini-button" onClick={() => setShowAdd(!showAdd)}><Plus size={16} /> Add</button></div>{showAdd && <div className="add-user-panel"><p>Real linked users need accounts in the backend. For now this adds a demo linked device card.</p><button className="primary-button" onClick={onAddUser}>Add demo user</button></div>}{linkedUsers.map((person) => <div key={person.id} className="linked-user-row"><span>{person.initials}</span><div><strong>{person.name}</strong><small>{person.email || person.phone}</small></div></div>)}</div></section>;
 }
 
 function NotificationCenter({ onClose }) {
-  return <div className="notification-panel glass-card"><div className="section-header"><div><p className="eyebrow">Notifications</p><h2>ParkLink alerts</h2></div><button className="mini-button" onClick={onClose}>Close</button></div><div className="activity-row"><Bell size={18} /><div><strong>Reservation limit active</strong><span>You can hold one spot at a time to prevent spam reservations.</span></div></div><div className="activity-row"><ShieldCheck size={18} /><div><strong>Parking OTP ready</strong><span>Use code 246810 to confirm you reached your reserved spot.</span></div></div><div className="activity-row"><Database size={18} /><div><strong>Email OTP active</strong><span>Login codes send from ParkLinkAI Gmail.</span></div></div></div>;
+  return <div className="notification-panel glass-card"><div className="section-header"><div><p className="eyebrow">Notifications</p><h2>ParkLink alerts</h2></div><button className="mini-button" onClick={onClose}>Close</button></div><div className="activity-row"><Bell size={18} /><div><strong>Reservation limit active</strong><span>You can hold one spot at a time to prevent spam reservations.</span></div></div><div className="activity-row"><ShieldCheck size={18} /><div><strong>Parking OTP ready</strong><span>Parking codes are generated when you reserve a spot and emailed to you.</span></div></div><div className="activity-row"><Database size={18} /><div><strong>Email OTP active</strong><span>Login and parking codes send from ParkLinkAI Gmail.</span></div></div></div>;
 }
 
 function SpotDetail({ spot, reservations, user, onBack, onReserveAction, action, now, activeReservationId }) {
@@ -287,12 +292,13 @@ function SpotDetail({ spot, reservations, user, onBack, onReserveAction, action,
   const mine = reservation && reservation.email === user.email;
   const canReserve = state === 'available' && !activeReservationId;
   const canUnreserve = state === 'mine' && mine;
+  const expectedParkingOtp = reservation?.parkingOtp || PARKING_CODE;
   const [parkingOtp, setParkingOtp] = useState('');
-  const [parkingVerified, setParkingVerified] = useState(false);
+  const [parkingVerified, setParkingVerified] = useState(Boolean(reservation?.parkingVerified));
   const [otpError, setOtpError] = useState('');
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${spot.lat},${spot.lng}`;
-  function verifyParkingOtp() { if (parkingOtp === PARKING_CODE) { setParkingVerified(true); setOtpError(''); } else setOtpError('Wrong parking OTP. Demo code: 246810.'); }
-  return <PhoneFrame><main className="app-shell phone-screen detail-shell"><button className="ghost-button" onClick={onBack}><ArrowLeft size={18} /> Back</button><section className={`detail-hero glass-card detail-${state}`}><div className="detail-icon">{getSpotIcon(spot, 34)}</div><p className="eyebrow">Module {spot.id}</p><h1>{spot.name}</h1><span className={`tag ${state}-tag`}>{getStatusLabel(spot, reservations)}</span><p>{spot.note}</p>{reservation && <div className="reservation-banner"><Timer size={18} /><span>Reserved for {reservation.userName || user.name} • {formatTime(reservation.expiresAt - now)} left</span></div>}</section><section className="detail-grid"><div className="glass-card detail-tile"><MapPin size={20} /><span>Distance</span><strong>{spot.distance}</strong></div><div className="glass-card detail-tile"><Clock size={20} /><span>ETA</span><strong>{spot.eta}</strong></div><div className="glass-card detail-tile"><ShieldCheck size={20} /><span>Confidence</span><strong>{spot.confidence}%</strong></div></section>{activeReservationId && !canUnreserve && <p className="error-text reservation-warning">You already have a reserved spot. Unreserve it before holding another one.</p>}<button className="primary-button big-action" disabled={!canReserve && !canUnreserve} onClick={() => onReserveAction(spot.id)}>{canUnreserve ? 'Unreserve spot' : canReserve ? 'Reserve for 5 minutes' : 'Reservation unavailable'} <CheckCircle2 size={20} /></button>{reservation && <section className="parking-otp-card glass-card"><p className="eyebrow">Parking spot OTP</p><h2>Confirm arrival</h2><p>When you physically get to the reserved spot, enter the parking OTP. Demo code: <strong>246810</strong></p><div className="input-row"><ShieldCheck size={18} /><input placeholder="Parking OTP" inputMode="numeric" maxLength={6} value={parkingOtp} onChange={(event) => setParkingOtp(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))} /></div>{otpError && <p className="error-text">{otpError}</p>}{parkingVerified ? <div className="verified-pill"><CheckCircle2 size={16} /> Parking verified</div> : <button className="primary-button" disabled={parkingOtp.length !== 6} onClick={verifyParkingOtp}>Verify parking OTP</button>}</section>}<button className="primary-button big-action navigation-action" onClick={() => window.open(mapsUrl, '_blank', 'noopener,noreferrer')}><Navigation size={20} /> Start navigation</button><ActionOverlay action={action} /></main></PhoneFrame>;
+  function verifyParkingOtp() { if (parkingOtp === expectedParkingOtp) { setParkingVerified(true); setOtpError(''); } else setOtpError('Wrong parking OTP. Check the email sent when you reserved this spot.'); }
+  return <PhoneFrame><main className="app-shell phone-screen detail-shell"><button className="ghost-button" onClick={onBack}><ArrowLeft size={18} /> Back</button><section className={`detail-hero glass-card detail-${state}`}><div className="detail-icon">{getSpotIcon(spot, 34)}</div><p className="eyebrow">Module {spot.id}</p><h1>{spot.name}</h1><span className={`tag ${state}-tag`}>{getStatusLabel(spot, reservations)}</span><p>{spot.note}</p>{reservation && <div className="reservation-banner"><Timer size={18} /><span>Reserved for {reservation.userName || user.name} • {formatTime(reservation.expiresAt - now)} left</span></div>}</section><section className="detail-grid"><div className="glass-card detail-tile"><MapPin size={20} /><span>Distance</span><strong>{spot.distance}</strong></div><div className="glass-card detail-tile"><Clock size={20} /><span>ETA</span><strong>{spot.eta}</strong></div><div className="glass-card detail-tile"><ShieldCheck size={20} /><span>Confidence</span><strong>{spot.confidence}%</strong></div></section>{activeReservationId && !canUnreserve && <p className="error-text reservation-warning">You already have a reserved spot. Unreserve it before holding another one.</p>}<button className="primary-button big-action" disabled={!canReserve && !canUnreserve} onClick={() => onReserveAction(spot.id)}>{canUnreserve ? 'Unreserve spot' : canReserve ? 'Reserve for 5 minutes' : 'Reservation unavailable'} <CheckCircle2 size={20} /></button>{reservation && <section className="parking-otp-card glass-card"><p className="eyebrow">Parking spot OTP</p><h2>Confirm arrival</h2><p>Enter the parking OTP emailed to <strong>{user.email}</strong> when this spot was reserved.</p>{reservation.parkingOtpEmailStatus === 'failed' && <p className="error-text">Email failed, backup code: {expectedParkingOtp}</p>}<div className="input-row"><ShieldCheck size={18} /><input placeholder="Parking OTP" inputMode="numeric" maxLength={6} value={parkingOtp} onChange={(event) => setParkingOtp(event.target.value.replace(/[^0-9]/g, '').slice(0, 6))} /></div>{otpError && <p className="error-text">{otpError}</p>}{parkingVerified ? <div className="verified-pill"><CheckCircle2 size={16} /> Parking verified</div> : <button className="primary-button" disabled={parkingOtp.length !== 6} onClick={verifyParkingOtp}>Verify parking OTP</button>}</section>}<button className="primary-button big-action navigation-action" onClick={() => window.open(mapsUrl, '_blank', 'noopener,noreferrer')}><Navigation size={20} /> Start navigation</button><ActionOverlay action={action} /></main></PhoneFrame>;
 }
 
 const tabs = [
@@ -353,12 +359,26 @@ export default function AppStable() {
   }
 
   async function handleReservation(spotId) {
+    const spot = initialSpots.find((item) => item.id === spotId);
     const reservation = getReservation(spotId, reservations);
     const reserving = !reservation;
     if (reserving && activeReservationId) { setAction({ title: 'Reservation limit', subtitle: 'Unreserve your current spot before holding another.' }); setTimeout(() => setAction(null), 1200); return; }
-    setAction({ title: reserving ? 'Reserving spot' : 'Unreserving spot', subtitle: reserving ? 'Starting your 5 minute hold...' : 'Releasing this space back to the lot...' });
     const expiresAt = Date.now() + RESERVATION_LENGTH_MS;
-    setReservations((current) => { const next = { ...current }; if (reserving) next[spotId] = { spotId, userName: user.name, email: user.email, phone: user.email, expiresAt }; else delete next[spotId]; return next; });
+    const parkingOtp = makeOtp();
+    setAction({ title: reserving ? 'Reserving spot' : 'Unreserving spot', subtitle: reserving ? 'Creating your parking OTP...' : 'Releasing this space back to the lot...' });
+    setReservations((current) => { const next = { ...current }; if (reserving) next[spotId] = { spotId, userName: user.name, email: user.email, phone: user.email, expiresAt, parkingOtp, parkingOtpEmailStatus: 'sending', parkingVerified: false }; else delete next[spotId]; return next; });
+    if (reserving) {
+      sendOtpEmail({ email: user.email, name: `${user.name} - ${spot?.name || spotId}`, code: parkingOtp })
+        .then(() => {
+          setReservations((current) => current[spotId] ? { ...current, [spotId]: { ...current[spotId], parkingOtpEmailStatus: 'sent' } } : current);
+          setAction({ title: 'Parking OTP sent', subtitle: `Check ${user.email} for your spot code.` });
+        })
+        .catch(() => {
+          setReservations((current) => current[spotId] ? { ...current, [spotId]: { ...current[spotId], parkingOtpEmailStatus: 'failed' } } : current);
+          setAction({ title: 'Spot reserved locally', subtitle: 'Parking OTP email failed, but backup code is shown on the spot page.' });
+        })
+        .finally(() => setTimeout(() => setAction(null), 1800));
+    }
     if (firebaseReady) {
       try {
         if (reserving) await reserveSpotInFirebase({ spotId, userName: user.name, phone: user.email, expiresAt });
@@ -367,7 +387,7 @@ export default function AppStable() {
         setAction({ title: 'Saved locally', subtitle: 'Firebase sync failed, but the button still works on this device.' });
       }
     }
-    setTimeout(() => setAction(null), 1400);
+    if (!reserving) setTimeout(() => setAction(null), 1200);
   }
 
   function handleAddUser() {
