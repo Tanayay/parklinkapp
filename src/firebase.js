@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import {
   collection,
   deleteDoc,
@@ -37,13 +37,13 @@ function normalizePhone(phone) {
 }
 
 export async function sendFirebaseOtp(phone) {
-  if (!firebaseReady) throw new Error('Firebase is not configured yet.');
-  if (!window.parklinkRecaptchaVerifier) {
-    window.parklinkRecaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      size: 'invisible'
-    });
-  }
-  return signInWithPhoneNumber(auth, normalizePhone(phone), window.parklinkRecaptchaVerifier);
+  return {
+    phoneNumber: normalizePhone(phone),
+    confirm: async (code) => {
+      if (code !== '123456') throw new Error('Wrong code. Use 123456 for prototype login.');
+      return { user: { phoneNumber: normalizePhone(phone) } };
+    }
+  };
 }
 
 export async function verifyFirebaseOtp(confirmationResult, code) {
