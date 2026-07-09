@@ -1,0 +1,37 @@
+.map-chip-strip {
+  top: auto !important;
+  right: 10px !important;
+  bottom: 10px !important;
+  left: 10px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  max-height: 52px !important;
+  pointer-events: auto !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+  background: rgba(5, 14, 31, 0.42) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.map-chip-strip .mini-map-row {
+  min-width: max-content !important;
+  padding: 7px 10px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  gap: 6px !important;
+}
+
+.map-chip-strip .mini-map-row strong {
+  font-size: 11px !important;
+}
+
+.map-chip-strip .mini-map-row span {
+  white-space: nowrap !important;
+}
+
+.real-map-card .drop-pin {
+  top: 10px !important;
+  right: 10px !important;
+}
