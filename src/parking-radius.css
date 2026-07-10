@@ -1,56 +1,70 @@
 .parking-radius-control {
   width: 100%;
-  padding: 14px;
-  margin: 12px 0;
   box-sizing: border-box;
+}
+
+.compact-radius-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0 12px;
+  padding: 9px 11px;
+  border: 1px solid rgba(125,211,252,.16);
+  border-radius: 14px;
+  background: rgba(255,255,255,.055);
   overflow: hidden;
 }
 
-.parking-radius-title {
-  display: grid;
-  gap: 3px;
-  margin-bottom: 10px;
-}
-
-.parking-radius-title span {
-  font-size: 10px;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,.55);
-}
-
-.parking-radius-title strong {
-  font-size: 14px;
-  color: rgba(255,255,255,.94);
-}
-
-.parking-radius-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  width: 100%;
-}
-
-.parking-radius-grid button {
+.compact-radius-control > span {
   min-width: 0;
-  border: 1px solid rgba(125,211,252,.18);
-  border-radius: 12px;
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.78);
-  padding: 9px 6px;
+  color: rgba(255,255,255,.74);
   font-size: 12px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
-.parking-radius-grid button.active {
-  background: linear-gradient(135deg, rgba(14,165,233,.9), rgba(37,99,235,.9));
-  color: white;
-  border-color: rgba(125,211,252,.7);
-  box-shadow: 0 8px 24px rgba(14,165,233,.22);
+.parklink-compact-select {
+  width: auto;
+  min-width: 92px;
+  max-width: 110px;
+  border: 1px solid rgba(125,211,252,.25);
+  border-radius: 10px;
+  background: rgba(7,18,38,.96);
+  color: #fff;
+  padding: 7px 28px 7px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  outline: none;
+}
+
+.parklink-compact-select option {
+  background: #071226;
+  color: #fff;
+}
+
+.ai-phone-safe .place-choice-list {
+  max-height: 270px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ai-phone-safe .place-choice-card {
+  width: 100%;
+  max-width: 100%;
 }
 
 @media (max-width: 390px) {
-  .parking-radius-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .compact-radius-control {
+    padding: 8px 9px;
+  }
+
+  .compact-radius-control > span {
+    font-size: 11px;
+  }
+
+  .parklink-compact-select {
+    min-width: 86px;
+    font-size: 11px;
   }
 }
