@@ -1,12 +1,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './AppParkLinkPersonal.jsx';
+import './parkingRadiusEnhancer.js';
 import './styles.css';
 import './recs.css';
 import './feedback-fixes.css';
 import './parklink-map-fixes.css';
 import './parklink-final-fixes.css';
 import './parklink-personal.css';
+import './parking-radius.css';
 
 try {
   const savedUser = JSON.parse(localStorage.getItem('parklink-user') || 'null');
