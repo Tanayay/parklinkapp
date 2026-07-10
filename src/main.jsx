@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './AppParkFlowFinal.jsx';
+import App from './AppParkFlowPlacePick.jsx';
 import './styles.css';
 import './recs.css';
 import './feedback-fixes.css';
