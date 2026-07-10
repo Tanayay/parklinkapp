@@ -1,10 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './AppParkFlowFixed.jsx';
+import App from './AppParkFlowFinal.jsx';
 import './styles.css';
 import './recs.css';
 import './feedback-fixes.css';
 import './parklink-map-fixes.css';
+import './parklink-final-fixes.css';
 
 try {
   const savedUser = JSON.parse(localStorage.getItem('parklink-user') || 'null');
