@@ -1,4 +1,7 @@
+import { CURATED_PARKING_AREAS } from '../data/curatedParkingAreas.js';
+
 const DEFAULT_CENTER = { lat: 33.8358, lng: -118.3406, label: 'Torrance, CA' };
+const STREET_PARKING_MAP_URL = 'https://streetparkingmap.com/';
 
 const CATEGORY_TERMS = {
   taco: ['taco', 'taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle'],
@@ -11,7 +14,6 @@ const CATEGORY_TERMS = {
   gas: ['gas station', 'chevron', 'shell', 'arco', 'mobil'],
   grocery: ['grocery store', 'supermarket', 'ralphs', 'vons', 'trader joes', 'whole foods', 'target', 'walmart'],
   brewery: ['brewery', 'brewing', 'taproom', 'beer garden', 'pub'],
-  breweries: ['brewery', 'brewing', 'taproom', 'beer garden', 'pub'],
   mall: ['mall', 'shopping center', 'shopping centre', 'plaza'],
   fun: ['arcade', 'bowling', 'amusement', 'entertainment', 'museum', 'park', 'theater'],
   topgolf: ['topgolf', 'top golf', 'golf driving range', 'golf entertainment'],
@@ -27,6 +29,12 @@ const CATEGORY_TERMS = {
 const ALIASES = {
   cpp: 'Cal Poly Pomona, Pomona, CA',
   'cal poly pomona': 'Cal Poly Pomona, Pomona, CA',
+  ucr: 'UC Riverside, Riverside, CA',
+  'uc riverside': 'UC Riverside, Riverside, CA',
+  ucsd: 'UC San Diego, La Jolla, CA',
+  'uc san diego': 'UC San Diego, La Jolla, CA',
+  'del amo': 'Del Amo Fashion Center, Torrance, CA',
+  'del amo mall': 'Del Amo Fashion Center, Torrance, CA',
   csulb: 'California State University Long Beach, Long Beach, CA',
   ucla: 'UCLA, Los Angeles, CA',
   usc: 'University of Southern California, Los Angeles, CA',
@@ -71,19 +79,6 @@ const CURATED_DESTINATIONS = {
     ['tg-ontario', 'Topgolf Ontario', 'Ontario, CA', 34.0633, -117.6509, 'Topgolf Ontario, CA']
   ]
 };
-
-const CPP_LOTS = [
-  ['cpp-lot-2', 'Cal Poly Pomona Lot 2', 'Campus parking lot', 34.05945, -117.82192, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-q', 'Cal Poly Pomona Lot Q', 'Campus parking lot', 34.05372, -117.81598, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-m', 'Cal Poly Pomona Lot M', 'Campus parking lot', 34.05215, -117.82060, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-b', 'Cal Poly Pomona Lot B', 'Campus parking lot', 34.06105, -117.82355, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-c', 'Cal Poly Pomona Lot C', 'Campus parking lot', 34.06155, -117.82050, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-e', 'Cal Poly Pomona Lot E', 'Campus parking lot', 34.05895, -117.81590, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-f', 'Cal Poly Pomona Lot F', 'Campus parking lot', 34.05715, -117.81495, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-j', 'Cal Poly Pomona Lot J', 'Campus parking lot', 34.05285, -117.82480, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-ps1', 'Cal Poly Pomona Parking Structure 1', 'Campus parking structure', 34.05720, -117.82755, 'Kellogg Dr, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.'],
-  ['cpp-ps2', 'Cal Poly Pomona Parking Structure 2', 'Campus parking structure', 34.05495, -117.82470, 'Temple Ave, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.']
-];
 
 const DISNEYLAND_LOTS = [
   ['dl-mickey', 'Mickey & Friends Parking Structure', 'Parking structure', 33.8157, -117.9269, 'Disneyland Dr, Anaheim, CA', 'Major Disneyland Resort parking structure. Verify current pricing and tram/walk route.'],
@@ -166,6 +161,56 @@ function relevanceScore(place, query, anchor) {
   tokens.forEach((token) => { if (hay.includes(token)) score += 10; });
   if (anchor && place.lat && place.lng) score -= Math.min(25, distanceMiles(anchor.lat, anchor.lng, place.lat, place.lng) * 1.5);
   return score;
+}
+function aliasMatches(area, text) {
+  const n = norm(text);
+  const name = norm(area.name);
+  if (!n) return false;
+  return name.includes(n) || n.includes(name) || (area.aliases || []).some((alias) => {
+    const a = norm(alias);
+    return a === n || a.includes(n) || n.includes(a);
+  });
+}
+function curatedAreaFor(place, query = '') {
+  const text = `${query} ${place?.name || ''} ${place?.address || ''}`;
+  return CURATED_PARKING_AREAS.find((area) => aliasMatches(area, text)) || null;
+}
+function curatedParkingDestinationRows(query, anchor) {
+  return CURATED_PARKING_AREAS
+    .filter((area) => aliasMatches(area, query))
+    .map((area) => ({
+      id: `curated-place-${area.id}`,
+      name: `${area.name} - ${area.areas?.[0]?.address || area.name}`,
+      shortName: area.name,
+      address: area.areas?.[0]?.address || 'Address not listed',
+      lat: area.center.lat,
+      lng: area.center.lng,
+      type: area.type,
+      class: 'curated-destination',
+      mapQuery: area.name,
+      distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, area.center.lat, area.center.lng) : 0,
+      curated: true,
+      source: area.source
+    }));
+}
+function streetParkingMapCoverage(place) {
+  const coverage = [
+    ['Los Angeles', 34.0522, -118.2437, 80],
+    ['San Francisco', 37.7749, -122.4194, 25],
+    ['Boston', 42.3601, -71.0589, 20],
+    ['Manhattan', 40.7831, -73.9712, 12],
+    ['Washington D.C.', 38.9072, -77.0369, 18],
+    ['Seattle', 47.6062, -122.3321, 25]
+  ];
+  const hit = coverage.find(([, lat, lng, miles]) => distanceMiles(place.lat, place.lng, lat, lng) <= miles);
+  if (!hit) return { available: false, url: STREET_PARKING_MAP_URL, source: 'StreetParkingMap' };
+  return {
+    available: true,
+    city: hit[0],
+    url: STREET_PARKING_MAP_URL,
+    source: 'StreetParkingMap',
+    note: `StreetParkingMap has sign-photo coverage near ${hit[0]}. Use it to verify posted signs; it is not ParkLink live availability.`
+  };
 }
 async function jsonFetch(url, timeoutMs = 4200) {
   const controller = new AbortController();
@@ -291,7 +336,7 @@ async function placesMode(req, res) {
     localPoiSearch(q, anchor, areaLabel).catch(() => [])
   ]);
   const seen = new Set();
-  const suggestions = [...curatedDestinationRows(q, anchor), ...mapRows.map((item) => placeFromItem(item, anchor)).filter(Boolean), ...poiRows]
+  const suggestions = [...curatedParkingDestinationRows(q, anchor), ...curatedDestinationRows(q, anchor), ...mapRows.map((item) => placeFromItem(item, anchor)).filter(Boolean), ...poiRows]
     .map((item) => ({ ...item, matchScore: relevanceScore(item, q, anchor) }))
     .filter((item) => {
       const key = `${norm(item.shortName)}-${Math.round(item.lat * 10000)}-${Math.round(item.lng * 10000)}`;
@@ -301,17 +346,17 @@ async function placesMode(req, res) {
     })
     .sort((a, b) => b.matchScore - a.matchScore || a.distanceFromAnchor - b.distanceFromAnchor)
     .slice(0, 15);
-  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-map-first', anchor, areaLabel });
+  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-map-first-curated-data', anchor, areaLabel });
 }
 function basePlaceName(name = '') { return clean(name.split(' - ')[0].split(',')[0]); }
 function addressFromName(name = '') { return clean(name.split(' - ').slice(1).join(' - ')); }
 function isCampus(place, query = '') {
   const text = norm(`${place?.name || ''} ${query}`);
-  return text.includes('college') || text.includes('university') || text.includes('campus') || text.includes('cal poly') || text.includes('ucla') || text.includes('usc') || text.includes('csu') || text.includes('community college');
+  return text.includes('college') || text.includes('university') || text.includes('campus') || text.includes('cal poly') || text.includes('university of california') || text.includes('uc riverside') || text.includes('uc san diego') || text.includes('ucr') || text.includes('ucsd') || text.includes('ucla') || text.includes('usc') || text.includes('csu') || text.includes('community college');
 }
 function isMajorDestination(place, query = '') {
   const text = norm(`${place?.name || ''} ${query}`);
-  return isCampus(place, query) || text.includes('disney') || text.includes('stadium') || text.includes('airport') || text.includes('arena') || text.includes('theme park') || text.includes('topgolf') || text.includes('top golf');
+  return isCampus(place, query) || text.includes('disney') || text.includes('stadium') || text.includes('airport') || text.includes('arena') || text.includes('theme park') || text.includes('topgolf') || text.includes('top golf') || text.includes('mall');
 }
 function accessLabel(tags = {}) {
   if (tags.access === 'private') return 'Private access — verify permission';
@@ -331,12 +376,49 @@ function parkingArea(tags = {}) {
   if (tags.parking === 'surface') return 'Surface parking lot';
   return 'Mapped parking lot';
 }
+function areaKindLabel(kind = '') {
+  if (kind === 'structure') return 'Parking structure';
+  if (kind === 'garage') return 'Parking garage';
+  if (kind === 'mall') return 'Mall parking area';
+  return 'Parking lot';
+}
+function curatedDataLotsFor(place, query = '') {
+  const area = curatedAreaFor(place, query);
+  if (!area) return [];
+  return (area.areas || []).map((spot, index) => {
+    const distance = distanceMiles(place.lat, place.lng, spot.lat, spot.lng);
+    const kindLabel = areaKindLabel(spot.kind);
+    const reason = `${area.name} curated parking data. ${spot.restriction || area.note || 'Verify posted signs and access rules.'}`;
+    return {
+      id: spot.id,
+      name: spot.name,
+      fullName: spot.name,
+      address: spot.address || area.name,
+      area: kindLabel,
+      bestLot: `${spot.address || area.name} • ${kindLabel}`,
+      distance,
+      capacity: spot.capacity || (spot.kind === 'structure' || spot.kind === 'garage' ? 500 : 120),
+      price: spot.restriction || area.note || 'Verify pricing, permits, and access rules',
+      walk: walkText(distance),
+      reason,
+      lat: spot.lat,
+      lng: spot.lng,
+      mapQuery: `${spot.name}, ${spot.address || area.name}`,
+      kind: 'lot',
+      source: area.source,
+      accessibility: spot.accessibility || 'Accessibility not confirmed',
+      priority: index,
+      availability: availabilityFor(spot.id, distance, index)
+    };
+  }).sort((a, b) => a.distance - b.distance);
+}
 function curatedLotsFor(place, query = '') {
+  const dataLots = curatedDataLotsFor(place, query);
+  if (dataLots.length) return dataLots;
   const text = norm(`${place?.name || ''} ${query}`);
   let rows = [];
   let source = '';
-  if (text.includes('cal poly pomona')) { rows = CPP_LOTS; source = 'ParkLink curated CPP data'; }
-  else if (text.includes('disneyland') || text.includes('anaheim')) { rows = DISNEYLAND_LOTS; source = 'ParkLink curated Disneyland data'; }
+  if (text.includes('disneyland') || text.includes('anaheim')) { rows = DISNEYLAND_LOTS; source = 'ParkLink curated Disneyland data'; }
   else if (text.includes('disney') || text.includes('magic kingdom') || text.includes('epcot') || text.includes('lake buena vista')) { rows = DISNEYWORLD_LOTS; source = 'ParkLink curated Disney World data'; }
   else if (text.includes('topgolf') || text.includes('top golf')) {
     rows = [[`topgolf-main-${Math.round(place.lat * 1000)}`, `Main Lot — ${basePlaceName(place.name) || 'Topgolf'}`, 'Customer parking lot', place.lat, place.lng, place.address || addressFromName(place.name) || 'Address not listed', 'Primary customer parking. Verify posted signs, hours, and event restrictions.']];
@@ -348,7 +430,7 @@ function curatedLotsFor(place, query = '') {
   }).sort((a, b) => a.distance - b.distance);
 }
 function mainLotFor(place, query = '') {
-  if (isMajorDestination(place, query)) return null;
+  if (isMajorDestination(place, query) || curatedAreaFor(place, query)) return null;
   const name = basePlaceName(place.name || query);
   const address = place.address || addressFromName(place.name) || 'Address not listed';
   if (!name) return null;
@@ -384,15 +466,16 @@ async function overpassParking(place, radiusMeters, radiusMiles, campusMode) {
     const namedPriority = official ? 2 : campusMode ? 7 : 4;
     return { id: `${item.type}-${item.id}`, name: title, fullName: official || title, address, area: parkingArea(tags), bestLot: `${address} • ${accessLabel(tags)}`, distance, capacity: Number(tags.capacity || (tags.parking === 'multi-storey' ? 400 : 70)), price: tags.fee === 'yes' ? 'Payment indicated' : tags.fee === 'no' ? 'Marked free' : 'Fee unknown', walk: walkText(distance), reason: `${official ? 'Named mapped parking area' : campusMode ? 'Unnamed mapped campus parking area' : 'Mapped parking area'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.`, lat, lng, mapQuery: `${title}, ${address}`, kind: 'lot', source: 'OpenStreetMap parking data', accessibility: accessibility(tags), priority: namedPriority, availability: availabilityFor(`${item.type}-${item.id}`, distance, namedPriority) };
   }).filter(Boolean).sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance).slice(0, 12);
+  const streetVerification = streetParkingMapCoverage(place);
   const street = campusMode ? [] : roads.map((road, index) => {
     const tags = road.tags || {};
     const hasVerifiedParking = Boolean(tags['parking:lane:both'] || tags['parking:lane:left'] || tags['parking:lane:right'] || tags['parking:both'] || tags['parking:left'] || tags['parking:right']);
     if (!hasVerifiedParking) return null;
     const distance = distanceMiles(place.lat, place.lng, road.lat, road.lng);
     if (distance > radiusMiles) return null;
-    return { id: `street-${index}-${road.name}`, name: `Street Parking — ${road.name}`, fullName: `Verified mapped street parking on ${road.name}`, address: road.name, area: 'Verified mapped street parking', bestLot: `${road.name} • verify signs/meters/sweeping`, distance, capacity: 0, price: 'Check posted rules', walk: walkText(distance), reason: `Shown because parking-lane/curb-parking tags are mapped on ${road.name}. Posted signs and meters still control.`, lat: road.lat, lng: road.lng, mapQuery: `${road.name} near ${basePlaceName(place.name)}`, kind: 'street', source: 'OpenStreetMap verified parking-lane tags', accessibility: 'Curb accessibility not confirmed', priority: 9, availability: availabilityFor(`street-${road.name}`, distance, 9) };
+    return { id: `street-${index}-${road.name}`, name: `Street Parking — ${road.name}`, fullName: `Verified mapped street parking on ${road.name}`, address: road.name, area: 'Verified mapped street parking', bestLot: `${road.name} • verify signs/meters/sweeping`, distance, capacity: 0, price: 'Check posted rules', walk: walkText(distance), reason: `Shown because parking-lane/curb-parking tags are mapped on ${road.name}. Posted signs and meters still control. Use StreetParkingMap/Street View to verify actual signs when available.`, lat: road.lat, lng: road.lng, mapQuery: `${road.name} near ${basePlaceName(place.name)}`, kind: 'street', source: 'OpenStreetMap verified parking-lane tags', accessibility: 'Curb accessibility not confirmed', priority: 9, availability: availabilityFor(`street-${road.name}`, distance, 9), verificationUrl: streetVerification.url, verificationSource: streetVerification.source };
   }).filter(Boolean).sort((a, b) => a.distance - b.distance).slice(0, 6);
-  return { lots, street };
+  return { lots, street, streetVerification };
 }
 export default async function handler(req, res) {
   try {
@@ -407,16 +490,18 @@ export default async function handler(req, res) {
       place = { name: selectedName, shortName: basePlaceName(selectedName), address: addressFromName(selectedName), lat, lng, mapQuery: selectedName };
     } else {
       const anchor = await getAnchor(req);
+      const curatedPlace = curatedParkingDestinationRows(q, anchor)[0] || curatedDestinationRows(q, anchor)[0] || null;
       const rows = await nominatimSearch(q, 4, anchor, false);
-      place = rows.map((item) => placeFromItem(item, anchor)).filter(Boolean)[0] || curatedDestinationRows(q, anchor)[0] || null;
+      place = curatedPlace || rows.map((item) => placeFromItem(item, anchor)).filter(Boolean)[0] || null;
     }
     if (!place) return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: 'Destination not found.' });
-    const campusMode = isCampus(place, q);
+    const hasCuratedArea = Boolean(curatedAreaFor(place, q));
+    const campusMode = isCampus(place, q) || hasCuratedArea;
     const minutes = Math.min(60, Math.max(5, Number(req.query.radiusMinutes || (campusMode ? 30 : 10))));
     const radiusMiles = campusMode ? Math.max(1.5, milesFor(minutes)) : milesFor(minutes);
     const radiusMeters = campusMode ? Math.max(2400, metersFor(minutes)) : metersFor(minutes);
     const [mapped, curated] = await Promise.all([
-      overpassParking(place, radiusMeters, radiusMiles, campusMode).catch(() => ({ lots: [], street: [] })),
+      overpassParking(place, radiusMeters, radiusMiles, campusMode).catch(() => ({ lots: [], street: [], streetVerification: streetParkingMapCoverage(place) })),
       Promise.resolve(curatedLotsFor(place, q))
     ]);
     const main = mainLotFor(place, q);
@@ -427,8 +512,9 @@ export default async function handler(req, res) {
       .slice(0, 12);
     const street = mapped.street;
     const results = [...lots, ...street];
-    const info = campusMode ? 'Campus mode: showing named/ref campus lots first, then unnamed mapped lots if needed.' : street.length ? `Showing destination lots, mapped lots, and verified mapped street parking within about ${minutes} minutes walking.` : 'No verified mapped street-parking tags found here. Showing destination/customer lots and mapped lots first; verify all signs and access rules.';
-    return res.status(200).json({ place, suggestions: [], results, sections: { lots, street }, radiusMinutes: minutes, radiusMiles, info, note: 'Availability is estimated until ParkLink sensors or live parking feeds are connected.' });
+    const streetParkingVerification = mapped.streetVerification || streetParkingMapCoverage(place);
+    const info = hasCuratedArea ? 'Using ParkLink curated parking data first, then mapped parking lots if needed.' : campusMode ? 'Campus mode: showing named/ref campus lots first, then unnamed mapped lots if needed.' : street.length ? `Showing destination lots, mapped lots, and verified mapped street parking within about ${minutes} minutes walking.` : 'No verified mapped street-parking tags found here. Showing destination/customer lots and mapped lots first; verify all signs and access rules.';
+    return res.status(200).json({ place, suggestions: [], results, sections: { lots, street }, radiusMinutes: minutes, radiusMiles, info, streetParkingVerification, note: 'Availability is estimated until ParkLink sensors or live parking feeds are connected. StreetParkingMap can help verify signs where it has coverage, but it is not live ParkLink availability.' });
   } catch (error) {
     return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: error.message || 'Parking search failed.' });
   }
