@@ -1,21 +1,23 @@
 const DEFAULT_CENTER = { lat: 33.8358, lng: -118.3406, label: 'Torrance, CA' };
 
 const CATEGORY_TERMS = {
-  taco: ['taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle', 'taco'],
-  tacos: ['taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle', 'taco'],
-  toy: ['toy store', 'target toys', 'walmart toys', 'lego store', 'build a bear', 'gamestop'],
-  toys: ['toy store', 'target toys', 'walmart toys', 'lego store', 'build a bear', 'gamestop'],
-  coffee: ['starbucks', 'coffee', 'cafe', 'peets coffee'],
+  taco: ['taco', 'taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle'],
+  tacos: ['taco', 'taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle'],
+  toy: ['toy store', 'toys', 'target', 'walmart', 'lego store', 'build a bear', 'gamestop'],
+  toys: ['toy store', 'toys', 'target', 'walmart', 'lego store', 'build a bear', 'gamestop'],
+  coffee: ['coffee', 'starbucks', 'cafe', 'peets coffee'],
   pizza: ['pizza', 'pizzeria', 'dominos', 'pizza hut'],
-  burger: ['in-n-out', 'burger', 'mcdonalds', 'burger king', 'five guys'],
+  burger: ['burger', 'in-n-out', 'mcdonalds', 'burger king', 'five guys'],
   gas: ['gas station', 'chevron', 'shell', 'arco', 'mobil'],
   grocery: ['grocery store', 'supermarket', 'ralphs', 'vons', 'trader joes', 'whole foods', 'target', 'walmart'],
+  brewery: ['brewery', 'brewing', 'taproom', 'beer garden', 'pub'],
+  breweries: ['brewery', 'brewing', 'taproom', 'beer garden', 'pub'],
+  mall: ['mall', 'shopping center', 'shopping centre', 'plaza'],
+  fun: ['arcade', 'bowling', 'amusement', 'entertainment', 'museum', 'park', 'theater'],
   topgolf: ['topgolf', 'top golf', 'golf driving range', 'golf entertainment'],
   golf: ['topgolf', 'golf driving range', 'golf course', 'golf entertainment'],
   school: ['college', 'university', 'campus'],
-  schools: ['college', 'university', 'campus'],
   college: ['college', 'community college', 'university', 'campus'],
-  colleges: ['college', 'community college', 'university', 'campus'],
   university: ['university', 'college', 'campus'],
   disney: ['disneyland resort anaheim ca', 'downtown disney district anaheim ca', 'disney california adventure anaheim ca', 'disney store', 'walt disney world resort florida', 'disney springs florida'],
   disneyland: ['disneyland resort anaheim ca', 'downtown disney district anaheim ca', 'disney california adventure anaheim ca'],
@@ -25,16 +27,10 @@ const CATEGORY_TERMS = {
 const ALIASES = {
   cpp: 'Cal Poly Pomona, Pomona, CA',
   'cal poly pomona': 'Cal Poly Pomona, Pomona, CA',
-  'cal poly': 'Cal Poly Pomona, Pomona, CA',
-  ucla: 'University of California Los Angeles, Los Angeles, CA',
+  csulb: 'California State University Long Beach, Long Beach, CA',
+  ucla: 'UCLA, Los Angeles, CA',
   usc: 'University of Southern California, Los Angeles, CA',
   uci: 'University of California Irvine, Irvine, CA',
-  ucsd: 'University of California San Diego, La Jolla, CA',
-  ucsb: 'University of California Santa Barbara, Santa Barbara, CA',
-  ucr: 'University of California Riverside, Riverside, CA',
-  csulb: 'California State University Long Beach, Long Beach, CA',
-  csuf: 'California State University Fullerton, Fullerton, CA',
-  csudh: 'California State University Dominguez Hills, Carson, CA',
   sdsu: 'San Diego State University, San Diego, CA',
   disneyworld: 'Walt Disney World Resort, Lake Buena Vista, FL',
   'disney world': 'Walt Disney World Resort, Lake Buena Vista, FL',
@@ -79,14 +75,14 @@ const CURATED_DESTINATIONS = {
 const CPP_LOTS = [
   ['cpp-lot-2', 'Cal Poly Pomona Lot 2', 'Campus parking lot', 34.05945, -117.82192, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
   ['cpp-lot-q', 'Cal Poly Pomona Lot Q', 'Campus parking lot', 34.05372, -117.81598, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-m', 'Cal Poly Pomona Lot M', 'Campus parking lot', 34.05215, -117.8206, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-m', 'Cal Poly Pomona Lot M', 'Campus parking lot', 34.05215, -117.82060, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
   ['cpp-lot-b', 'Cal Poly Pomona Lot B', 'Campus parking lot', 34.06105, -117.82355, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-c', 'Cal Poly Pomona Lot C', 'Campus parking lot', 34.06155, -117.8205, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-e', 'Cal Poly Pomona Lot E', 'Campus parking lot', 34.05895, -117.8159, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-c', 'Cal Poly Pomona Lot C', 'Campus parking lot', 34.06155, -117.82050, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-e', 'Cal Poly Pomona Lot E', 'Campus parking lot', 34.05895, -117.81590, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
   ['cpp-lot-f', 'Cal Poly Pomona Lot F', 'Campus parking lot', 34.05715, -117.81495, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-lot-j', 'Cal Poly Pomona Lot J', 'Campus parking lot', 34.05285, -117.8248, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
-  ['cpp-ps1', 'Cal Poly Pomona Parking Structure 1', 'Campus parking structure', 34.0572, -117.82755, 'Kellogg Dr, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.'],
-  ['cpp-ps2', 'Cal Poly Pomona Parking Structure 2', 'Campus parking structure', 34.05495, -117.8247, 'Temple Ave, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.']
+  ['cpp-lot-j', 'Cal Poly Pomona Lot J', 'Campus parking lot', 34.05285, -117.82480, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-ps1', 'Cal Poly Pomona Parking Structure 1', 'Campus parking structure', 34.05720, -117.82755, 'Kellogg Dr, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.'],
+  ['cpp-ps2', 'Cal Poly Pomona Parking Structure 2', 'Campus parking structure', 34.05495, -117.82470, 'Temple Ave, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.']
 ];
 
 const DISNEYLAND_LOTS = [
@@ -142,7 +138,7 @@ function searchTerms(query = '') {
   const text = norm(query);
   const terms = new Set([resolveAlias(query), query]);
   for (const [key, list] of Object.entries(CATEGORY_TERMS)) {
-    if (text.includes(key) || key.includes(text)) list.slice(0, 6).forEach((term) => terms.add(term));
+    if (text.includes(key) || key.includes(text)) list.forEach((term) => terms.add(term));
   }
   return [...terms].filter(Boolean).slice(0, 8);
 }
@@ -155,9 +151,6 @@ function titleFrom(item = {}) {
   const address = item.address || {};
   return clean(item.name || address.shop || address.amenity || address.tourism || address.leisure || address.building || (item.display_name || '').split(',')[0]);
 }
-function isGenericName(name = '') {
-  return ['place', 'shop', 'store', 'restaurant', 'food', 'parking', 'parking lot', 'mapped parking lot', 'taco shop', 'toy store'].includes(norm(name));
-}
 function escapeRegex(value = '') { return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function poiName(tags = {}) { return clean(tags.name || tags.brand || tags.operator || ''); }
 function displayAddressFromTags(tags = {}, fallback = 'near saved search area') {
@@ -166,28 +159,19 @@ function displayAddressFromTags(tags = {}, fallback = 'near saved search area') 
   const state = tags['addr:state'] || '';
   return [street, city, state].filter(Boolean).join(', ') || tags['addr:street'] || fallback;
 }
-function categoryRegex(query = '') {
-  const rawTerms = searchTerms(query).concat(norm(query).split(' '));
-  const terms = [...new Set(rawTerms.map((term) => norm(term)).filter((term) => term.length > 1))].slice(0, 12);
-  return terms.map(escapeRegex).join('|') || escapeRegex(norm(query));
-}
 function relevanceScore(place, query, anchor) {
   const hay = norm(`${place.shortName || ''} ${place.name || ''} ${place.address || ''} ${place.type || ''}`);
   const tokens = norm(query).split(' ').filter(Boolean);
-  let score = place.curated ? 100 : place.localPoi ? 25 : 0;
-  tokens.forEach((token) => { if (hay.includes(token)) score += 15; });
-  if (anchor && place.lat && place.lng) score -= Math.min(35, distanceMiles(anchor.lat, anchor.lng, place.lat, place.lng) * 2);
+  let score = place.curated ? 100 : place.localPoi ? 20 : 0;
+  tokens.forEach((token) => { if (hay.includes(token)) score += 10; });
+  if (anchor && place.lat && place.lng) score -= Math.min(25, distanceMiles(anchor.lat, anchor.lng, place.lat, place.lng) * 1.5);
   return score;
-}
-function isCampusQuery(value = '') {
-  const text = norm(value);
-  return text.includes('college') || text.includes('university') || text.includes('campus') || text.includes('cal poly') || text.includes('cal state') || text.includes('csu') || text.includes('uc ') || text.includes('ucla') || text.includes('usc') || text.includes('community college') || text.includes('school');
 }
 async function jsonFetch(url, timeoutMs = 4200) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json', 'User-Agent': 'ParkLink v10 search' } });
+    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json', 'User-Agent': 'ParkLink v10 map-first search' } });
     if (!response.ok) return [];
     return response.json();
   } catch {
@@ -196,11 +180,11 @@ async function jsonFetch(url, timeoutMs = 4200) {
     clearTimeout(timer);
   }
 }
-async function postText(url, body, timeoutMs = 6500) {
+async function postText(url, body, timeoutMs = 6200) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'User-Agent': 'ParkLink v10 search' }, body });
+    const response = await fetch(url, { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'User-Agent': 'ParkLink v10 map-first search' }, body });
     if (!response.ok) return { elements: [] };
     return response.json();
   } catch {
@@ -212,7 +196,7 @@ async function postText(url, body, timeoutMs = 6500) {
 async function geocodeText(text) {
   const value = clean(text);
   if (!value) return null;
-  const params = new URLSearchParams({ format: 'json', limit: '1', addressdetails: '1', countrycodes: 'us', q: value });
+  const params = new URLSearchParams({ format: 'json', limit: '1', addressdetails: '1', q: value });
   const data = await jsonFetch(`https://nominatim.openstreetmap.org/search?${params}`, 3200);
   const first = data[0];
   if (!first) return null;
@@ -221,78 +205,94 @@ async function geocodeText(text) {
   return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
 }
 async function getAnchor(req) { return homeAnchor(req) || await geocodeText(homeText(req)) || DEFAULT_CENTER; }
-async function nominatimSearch(term, req, anchor, limit = 5) {
-  const area = homeText(req);
-  const q = area && !explicitLocation(term) ? `${term} near ${area}` : term;
-  const params = new URLSearchParams({ format: 'json', limit: String(limit), addressdetails: '1', countrycodes: 'us', q });
-  if (anchor && !explicitLocation(term)) {
-    params.set('viewbox', `${anchor.lng - 0.7},${anchor.lat + 0.7},${anchor.lng + 0.7},${anchor.lat - 0.7}`);
+async function nominatimSearch(text, limit = 6, anchor = null, bounded = false) {
+  const value = clean(text);
+  if (!value) return [];
+  const params = new URLSearchParams({ format: 'json', limit: String(limit), addressdetails: '1', q: value });
+  if (anchor && bounded) {
+    params.set('viewbox', `${anchor.lng - 0.9},${anchor.lat + 0.9},${anchor.lng + 0.9},${anchor.lat - 0.9}`);
     params.set('bounded', '1');
   }
-  return jsonFetch(`https://nominatim.openstreetmap.org/search?${params}`, 3600);
+  return jsonFetch(`https://nominatim.openstreetmap.org/search?${params}`, 4200);
 }
-function placeFromItem(item, anchor) {
+function placeFromItem(item, anchor, source = 'map') {
   const lat = Number(item.lat);
   const lng = Number(item.lon);
   const title = titleFrom(item);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !title || isGenericName(title)) return null;
-  const address = shortAddress(item.address || {}) || (item.display_name || '').split(',').slice(1, 4).map(clean).filter(Boolean).join(', ') || 'Address not listed';
-  return { id: `place-${item.place_id || `${lat}-${lng}`}`, name: `${title} - ${address}`, shortName: title, address, lat, lng, type: item.type || 'place', class: item.class || 'place', mapQuery: `${title}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0 };
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !title) return null;
+  const address = shortAddress(item.address || {}) || (item.display_name || '').split(',').slice(1, 5).map(clean).filter(Boolean).join(', ') || 'Address not listed';
+  return { id: `${source}-${item.place_id || `${lat}-${lng}`}`, name: `${title} - ${address}`, shortName: title, address, lat, lng, type: item.type || item.class || 'place', class: item.class || 'place', mapQuery: `${title}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, source };
 }
 function placeFromPoi(element, anchor, fallbackLabel) {
   const lat = element.lat ?? element.center?.lat;
   const lng = element.lon ?? element.center?.lon;
   const tags = element.tags || {};
   const name = poiName(tags);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !name || isGenericName(name)) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !name) return null;
   const address = displayAddressFromTags(tags, fallbackLabel);
-  return { id: `poi-${element.type}-${element.id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: tags.shop || tags.amenity || tags.tourism || tags.leisure || tags.sport || 'place', class: 'poi', mapQuery: `${name}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, localPoi: true };
+  return { id: `poi-${element.type}-${element.id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: tags.shop || tags.amenity || tags.tourism || tags.leisure || tags.sport || 'place', class: 'poi', mapQuery: `${name}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, localPoi: true, source: 'local-map-poi' };
+}
+function queryRegex(query = '') {
+  const raw = [query, resolveAlias(query), ...searchTerms(query), ...norm(query).split(' ')];
+  const terms = [...new Set(raw.map((term) => norm(term)).filter((term) => term.length > 1))].slice(0, 16);
+  return terms.map(escapeRegex).join('|') || escapeRegex(norm(query));
 }
 async function localPoiSearch(query, anchor, label) {
   if (!anchor) return [];
-  const regex = categoryRegex(query);
-  const body = `[out:json][timeout:16];(
-    node["name"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
-    way["name"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
-    relation["name"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
-    node["brand"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
-    way["brand"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
-    node["amenity"~"restaurant|fast_food|cafe|college|university|school",i](around:12000,${anchor.lat},${anchor.lng});
-    way["amenity"~"restaurant|fast_food|cafe|college|university|school",i](around:12000,${anchor.lat},${anchor.lng});
-    relation["amenity"~"college|university|school",i](around:30000,${anchor.lat},${anchor.lng});
-    node["shop"~"toys|department_store|supermarket|convenience|mall",i](around:9000,${anchor.lat},${anchor.lng});
-    way["shop"~"toys|department_store|supermarket|convenience|mall",i](around:9000,${anchor.lat},${anchor.lng});
-    node["sport"="golf"](around:30000,${anchor.lat},${anchor.lng});
-    way["sport"="golf"](around:30000,${anchor.lat},${anchor.lng});
-    node["leisure"~"golf_course|sports_centre",i](around:30000,${anchor.lat},${anchor.lng});
-    way["leisure"~"golf_course|sports_centre",i](around:30000,${anchor.lat},${anchor.lng});
-  );out center tags 140;`;
-  const data = await postText('https://overpass-api.de/api/interpreter', body, 5600);
+  const regex = queryRegex(query);
+  const body = `[out:json][timeout:18];(
+    node["name"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    way["name"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    relation["name"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    node["brand"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    way["brand"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    relation["brand"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    node["shop"](around:12000,${anchor.lat},${anchor.lng});
+    way["shop"](around:12000,${anchor.lat},${anchor.lng});
+    node["amenity"~"restaurant|fast_food|cafe|bar|pub|biergarten|theatre|cinema",i](around:12000,${anchor.lat},${anchor.lng});
+    way["amenity"~"restaurant|fast_food|cafe|bar|pub|biergarten|theatre|cinema",i](around:12000,${anchor.lat},${anchor.lng});
+    node["leisure"](around:12000,${anchor.lat},${anchor.lng});
+    way["leisure"](around:12000,${anchor.lat},${anchor.lng});
+    node["tourism"](around:12000,${anchor.lat},${anchor.lng});
+    way["tourism"](around:12000,${anchor.lat},${anchor.lng});
+    node["craft"="brewery"](around:25000,${anchor.lat},${anchor.lng});
+    way["craft"="brewery"](around:25000,${anchor.lat},${anchor.lng});
+  );out center tags 160;`;
+  const data = await postText('https://overpass-api.de/api/interpreter', body, 6200);
   return (data?.elements || []).map((element) => placeFromPoi(element, anchor, label)).filter(Boolean);
 }
-function curatedDestinationRows(query, req, anchor) {
+function curatedDestinationRows(query, anchor) {
   const text = norm(query);
   let rows = [];
-  if (text.includes('topgolf') || text.includes('top golf') || text.includes('golf')) rows = CURATED_DESTINATIONS.topgolf;
+  if (text.includes('topgolf') || text.includes('top golf') || text === 'golf') rows = CURATED_DESTINATIONS.topgolf;
   else if (text.includes('disneyland') || text.includes('anaheim')) rows = CURATED_DESTINATIONS.disneyland;
   else if (text.includes('disneyworld') || text.includes('disney world') || text.includes('orlando') || text.includes('florida')) rows = CURATED_DESTINATIONS.disneyworld;
   else if (text.includes('disney') || text.includes('bisney')) rows = CURATED_DESTINATIONS.disney;
-  return rows.map(([id, name, address, lat, lng, mapQuery]) => ({ id: `curated-${id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: 'curated', class: 'destination', mapQuery, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, curated: true }));
+  return rows.map(([id, name, address, lat, lng, mapQuery]) => ({ id: `curated-${id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: 'curated', class: 'destination', mapQuery, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, curated: true, source: 'curated' }));
 }
 async function placesMode(req, res) {
   const q = clean(req.query.q || '');
   if (q.length < 2) return res.status(200).json({ suggestions: [], place: null });
   const anchor = await getAnchor(req);
-  const areaLabel = homeText(req) || 'saved search area';
-  const terms = searchTerms(q).slice(0, 4);
-  const [nominatimRows, poiRows] = await Promise.all([
-    Promise.all(terms.map((term) => nominatimSearch(term, req, anchor, 4))).then((parts) => parts.flat()).catch(() => []),
+  const area = homeText(req);
+  const areaLabel = area || anchor.label || 'saved search area';
+  const terms = searchTerms(q);
+  const searchQueries = [];
+  if (area && !explicitLocation(q)) searchQueries.push(`${q} near ${area}`, `${q} ${area}`);
+  searchQueries.push(resolveAlias(q), q);
+  if (!explicitLocation(q)) searchQueries.push(`${q} California`);
+  terms.forEach((term) => {
+    if (area && !explicitLocation(term)) searchQueries.push(`${term} near ${area}`);
+    searchQueries.push(term);
+  });
+  const uniqueQueries = [...new Set(searchQueries.map(clean).filter(Boolean))].slice(0, 10);
+  const [mapRows, poiRows] = await Promise.all([
+    Promise.all(uniqueQueries.map((term, index) => nominatimSearch(term, index < 3 ? 7 : 4, anchor, false))).then((parts) => parts.flat()).catch(() => []),
     localPoiSearch(q, anchor, areaLabel).catch(() => [])
   ]);
   const seen = new Set();
-  const suggestions = [...curatedDestinationRows(q, req, anchor), ...poiRows, ...nominatimRows.map((item) => placeFromItem(item, anchor)).filter(Boolean)]
+  const suggestions = [...curatedDestinationRows(q, anchor), ...mapRows.map((item) => placeFromItem(item, anchor)).filter(Boolean), ...poiRows]
     .map((item) => ({ ...item, matchScore: relevanceScore(item, q, anchor) }))
-    .filter((item) => item.curated || item.localPoi || item.matchScore > -20)
     .filter((item) => {
       const key = `${norm(item.shortName)}-${Math.round(item.lat * 10000)}-${Math.round(item.lng * 10000)}`;
       if (seen.has(key)) return false;
@@ -300,15 +300,23 @@ async function placesMode(req, res) {
       return true;
     })
     .sort((a, b) => b.matchScore - a.matchScore || a.distanceFromAnchor - b.distanceFromAnchor)
-    .slice(0, 12);
-  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-campus-local', anchor, areaLabel });
+    .slice(0, 15);
+  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-map-first', anchor, areaLabel });
 }
 function basePlaceName(name = '') { return clean(name.split(' - ')[0].split(',')[0]); }
 function addressFromName(name = '') { return clean(name.split(' - ').slice(1).join(' - ')); }
+function isCampus(place, query = '') {
+  const text = norm(`${place?.name || ''} ${query}`);
+  return text.includes('college') || text.includes('university') || text.includes('campus') || text.includes('cal poly') || text.includes('ucla') || text.includes('usc') || text.includes('csu') || text.includes('community college');
+}
+function isMajorDestination(place, query = '') {
+  const text = norm(`${place?.name || ''} ${query}`);
+  return isCampus(place, query) || text.includes('disney') || text.includes('stadium') || text.includes('airport') || text.includes('arena') || text.includes('theme park') || text.includes('topgolf') || text.includes('top golf');
+}
 function accessLabel(tags = {}) {
   if (tags.access === 'private') return 'Private access — verify permission';
   if (tags.access === 'customers') return 'Customer/shared parking — verify signs';
-  if (tags.access === 'permit' || tags.access === 'permissive') return 'Permit/controlled parking — verify permit rules';
+  if (tags.access === 'permit') return 'Permit parking — verify permit rules';
   return 'Public/unspecified access — check posted signs';
 }
 function accessibility(tags = {}) {
@@ -317,30 +325,11 @@ function accessibility(tags = {}) {
   if (tags.wheelchair === 'no') return 'Not wheelchair accessible';
   return 'Accessibility not confirmed';
 }
-function parkingArea(tags = {}, campus = false) {
-  if (tags.parking === 'multi-storey') return campus ? 'Campus parking structure' : 'Parking structure';
+function parkingArea(tags = {}) {
+  if (tags.parking === 'multi-storey') return 'Parking structure';
   if (tags.parking === 'underground') return 'Underground parking';
-  if (tags.parking === 'surface') return campus ? 'Campus surface lot' : 'Surface parking lot';
-  return campus ? 'Campus mapped parking lot' : 'Mapped parking lot';
-}
-function isMajorDestination(place, query = '') {
-  const text = norm(`${place?.name || ''} ${query}`);
-  return text.includes('disney') || text.includes('stadium') || text.includes('airport') || text.includes('arena') || text.includes('theme park') || text.includes('topgolf') || text.includes('top golf');
-}
-function isCampusDestination(place, query = '') {
-  const text = norm(`${place?.name || ''} ${place?.address || ''} ${query}`);
-  return isCampusQuery(text) || text.includes('cal poly pomona') || text.includes('ucla') || text.includes('usc') || text.includes('csulb') || text.includes('csuf') || text.includes('sdsu');
-}
-function campusLotTitle(tags = {}, street = '') {
-  const official = clean(tags.name || tags.official_name || tags.alt_name || tags.ref || '');
-  if (official && !isGenericName(official)) {
-    if (/^(lot|parking|structure|garage|ps\s*\d|p\d|[a-z]\d?|\d+[a-z]?)\b/i.test(official)) return official.match(/^lot\b/i) ? official : official;
-    if (/^[a-z0-9-]{1,5}$/i.test(official)) return `Lot ${official.toUpperCase()}`;
-    return official;
-  }
-  if (tags.ref && /^[a-z0-9-]{1,6}$/i.test(tags.ref)) return `Lot ${String(tags.ref).toUpperCase()}`;
-  if (street) return `Unnamed mapped campus lot near ${street}`;
-  return 'Unnamed mapped campus lot';
+  if (tags.parking === 'surface') return 'Surface parking lot';
+  return 'Mapped parking lot';
 }
 function curatedLotsFor(place, query = '') {
   const text = norm(`${place?.name || ''} ${query}`);
@@ -350,8 +339,8 @@ function curatedLotsFor(place, query = '') {
   else if (text.includes('disneyland') || text.includes('anaheim')) { rows = DISNEYLAND_LOTS; source = 'ParkLink curated Disneyland data'; }
   else if (text.includes('disney') || text.includes('magic kingdom') || text.includes('epcot') || text.includes('lake buena vista')) { rows = DISNEYWORLD_LOTS; source = 'ParkLink curated Disney World data'; }
   else if (text.includes('topgolf') || text.includes('top golf')) {
-    rows = [[`topgolf-main-${Math.round(place.lat * 1000)}`, `Main Lot — ${basePlaceName(place.name) || 'Topgolf'}`, 'Customer parking lot', place.lat, place.lng, place.address || addressFromName(place.name) || 'Address not listed', 'Primary customer parking for Topgolf. Verify posted signs, hours, and event restrictions.']];
-    source = 'ParkLink curated Topgolf estimate';
+    rows = [[`topgolf-main-${Math.round(place.lat * 1000)}`, `Main Lot — ${basePlaceName(place.name) || 'Topgolf'}`, 'Customer parking lot', place.lat, place.lng, place.address || addressFromName(place.name) || 'Address not listed', 'Primary customer parking. Verify posted signs, hours, and event restrictions.']];
+    source = 'ParkLink curated destination estimate';
   }
   return rows.map(([id, name, area, lat, lng, address, reason], index) => {
     const distance = distanceMiles(place.lat, place.lng, lat, lng);
@@ -359,48 +348,43 @@ function curatedLotsFor(place, query = '') {
   }).sort((a, b) => a.distance - b.distance);
 }
 function mainLotFor(place, query = '') {
-  if (isMajorDestination(place, query) || isCampusDestination(place, query)) return null;
+  if (isMajorDestination(place, query)) return null;
   const name = basePlaceName(place.name || query);
   const address = place.address || addressFromName(place.name) || 'Address not listed';
-  if (!name || isGenericName(name)) return null;
+  if (!name) return null;
   return { id: `main-${Math.round(place.lat * 10000)}-${Math.round(place.lng * 10000)}`, name: `Main Lot — ${name}`, fullName: `Main Lot — ${name}`, address, area: 'Likely customer/shared lot', bestLot: `${address} • verify signs/customer access`, distance: 0.03, capacity: 20, price: 'Customer/shared parking rules may apply', walk: '1-2 min walk', reason: `Best first check for ${name}. This is an estimated customer/shared lot near the destination; verify posted signs, towing rules, and access limits.`, lat: place.lat, lng: place.lng, mapQuery: `${name} parking, ${address}`, kind: 'lot', source: 'ParkLink destination-lot estimate', accessibility: 'Accessibility not confirmed', priority: 1, availability: availabilityFor(`main-${name}`, 0.03, 1) };
 }
-async function overpassParking(place, radiusMeters, radiusMiles, campus = false) {
-  const searchMeters = campus ? Math.max(radiusMeters, 3200) : radiusMeters;
-  const searchMiles = campus ? Math.max(radiusMiles, 2.0) : radiusMiles;
-  const body = `[out:json][timeout:20];(
-    node["amenity"="parking"](around:${searchMeters},${place.lat},${place.lng});
-    way["amenity"="parking"](around:${searchMeters},${place.lat},${place.lng});
-    relation["amenity"="parking"](around:${searchMeters},${place.lat},${place.lng});
-    way["highway"]["name"](around:${searchMeters},${place.lat},${place.lng});
-  );out center tags 180;`;
-  const data = await postText('https://overpass-api.de/api/interpreter', body, 7200);
+async function overpassParking(place, radiusMeters, radiusMiles, campusMode) {
+  const body = `[out:json][timeout:18];(
+    node["amenity"="parking"](around:${radiusMeters},${place.lat},${place.lng});
+    way["amenity"="parking"](around:${radiusMeters},${place.lat},${place.lng});
+    relation["amenity"="parking"](around:${radiusMeters},${place.lat},${place.lng});
+    way["highway"]["name"](around:${radiusMeters},${place.lat},${place.lng});
+  );out center tags 140;`;
+  const data = await postText('https://overpass-api.de/api/interpreter', body, 6500);
   const elements = data?.elements || [];
   const roads = elements.filter((e) => e.tags?.highway && e.tags?.name).map((e) => ({ name: e.tags.name, lat: e.center?.lat, lng: e.center?.lon, tags: e.tags })).filter((e) => e.lat && e.lng);
-  function nearestRoad(lat, lng) {
-    return roads.map((road) => ({ ...road, distance: distanceMiles(lat, lng, road.lat, road.lng) })).filter((road) => road.distance <= 0.35).sort((a, b) => a.distance - b.distance)[0] || null;
-  }
+  function nearestRoad(lat, lng) { return roads.map((road) => ({ ...road, distance: distanceMiles(lat, lng, road.lat, road.lng) })).filter((road) => road.distance <= 0.25).sort((a, b) => a.distance - b.distance)[0] || null; }
   const seen = new Set();
   const lots = elements.filter((e) => e.tags?.amenity === 'parking').map((item) => {
     const lat = item.lat ?? item.center?.lat;
     const lng = item.lon ?? item.center?.lon;
     if (!lat || !lng) return null;
     const distance = distanceMiles(place.lat, place.lng, lat, lng);
-    if (distance > searchMiles) return null;
+    if (distance > radiusMiles) return null;
     const tags = item.tags || {};
     const road = nearestRoad(lat, lng);
+    const official = clean(tags.name || tags.ref || tags.operator || tags.brand || tags.official_name || tags.alt_name || '');
     const street = clean(tags['addr:street'] || road?.name || '');
-    const official = clean(tags.name || tags.official_name || tags.alt_name || tags.ref || '');
-    const title = campus ? campusLotTitle(tags, street) : official && !isGenericName(official) ? official : street ? `Parking near ${street}` : `Parking near ${basePlaceName(place.name)}`;
+    const title = official || (campusMode ? `Unnamed mapped campus lot near ${street || basePlaceName(place.name)}` : street ? `Parking near ${street}` : `Parking near ${basePlaceName(place.name)}`);
     const key = `${title}-${Math.round(lat * 10000)}-${Math.round(lng * 10000)}`;
     if (seen.has(key)) return null;
     seen.add(key);
     const address = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ') || street || place.address || addressFromName(place.name) || 'Address not listed';
-    const namedCampus = campus && !title.toLowerCase().startsWith('unnamed');
-    const priority = campus ? (namedCampus ? 1 : 7) : (official ? 3 : 4);
-    return { id: `${item.type}-${item.id}`, name: title, fullName: official || title, address, area: parkingArea(tags, campus), bestLot: `${address} • ${accessLabel(tags)}`, distance, capacity: Number(tags.capacity || (tags.parking === 'multi-storey' ? 400 : 70)), price: tags.fee === 'yes' ? 'Payment indicated' : tags.fee === 'no' ? 'Marked free' : campus ? 'Permit/payment rules may apply' : 'Fee unknown', walk: walkText(distance), reason: campus ? `${namedCampus ? 'Named/ref campus parking area' : 'Mapped campus parking without an official name/ref in map data'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.` : `${official ? 'Named mapped parking area' : 'Mapped parking area'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.`, lat, lng, mapQuery: `${title}, ${address}`, kind: 'lot', source: campus ? 'OpenStreetMap campus parking data' : 'OpenStreetMap parking data', accessibility: accessibility(tags), priority, availability: availabilityFor(`${item.type}-${item.id}`, distance, priority) };
-  }).filter(Boolean).sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance).slice(0, campus ? 18 : 10);
-  const street = campus ? [] : roads.map((road, index) => {
+    const namedPriority = official ? 2 : campusMode ? 7 : 4;
+    return { id: `${item.type}-${item.id}`, name: title, fullName: official || title, address, area: parkingArea(tags), bestLot: `${address} • ${accessLabel(tags)}`, distance, capacity: Number(tags.capacity || (tags.parking === 'multi-storey' ? 400 : 70)), price: tags.fee === 'yes' ? 'Payment indicated' : tags.fee === 'no' ? 'Marked free' : 'Fee unknown', walk: walkText(distance), reason: `${official ? 'Named mapped parking area' : campusMode ? 'Unnamed mapped campus parking area' : 'Mapped parking area'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.`, lat, lng, mapQuery: `${title}, ${address}`, kind: 'lot', source: 'OpenStreetMap parking data', accessibility: accessibility(tags), priority: namedPriority, availability: availabilityFor(`${item.type}-${item.id}`, distance, namedPriority) };
+  }).filter(Boolean).sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance).slice(0, 12);
+  const street = campusMode ? [] : roads.map((road, index) => {
     const tags = road.tags || {};
     const hasVerifiedParking = Boolean(tags['parking:lane:both'] || tags['parking:lane:left'] || tags['parking:lane:right'] || tags['parking:both'] || tags['parking:left'] || tags['parking:right']);
     if (!hasVerifiedParking) return null;
@@ -423,16 +407,16 @@ export default async function handler(req, res) {
       place = { name: selectedName, shortName: basePlaceName(selectedName), address: addressFromName(selectedName), lat, lng, mapQuery: selectedName };
     } else {
       const anchor = await getAnchor(req);
-      const rows = await nominatimSearch(q, req, anchor, 1);
-      place = rows[0] ? placeFromItem(rows[0], anchor) : curatedDestinationRows(q, req, anchor)[0] || null;
+      const rows = await nominatimSearch(q, 4, anchor, false);
+      place = rows.map((item) => placeFromItem(item, anchor)).filter(Boolean)[0] || curatedDestinationRows(q, anchor)[0] || null;
     }
     if (!place) return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: 'Destination not found.' });
-    const campus = isCampusDestination(place, q);
-    const minutes = Math.min(60, Math.max(5, Number(req.query.radiusMinutes || (campus ? 20 : 10))));
-    const radiusMiles = campus ? Math.max(milesFor(minutes), 2.0) : milesFor(minutes);
-    const radiusMeters = metersFor(campus ? Math.max(minutes, 20) : minutes);
+    const campusMode = isCampus(place, q);
+    const minutes = Math.min(60, Math.max(5, Number(req.query.radiusMinutes || (campusMode ? 30 : 10))));
+    const radiusMiles = campusMode ? Math.max(1.5, milesFor(minutes)) : milesFor(minutes);
+    const radiusMeters = campusMode ? Math.max(2400, metersFor(minutes)) : metersFor(minutes);
     const [mapped, curated] = await Promise.all([
-      overpassParking(place, radiusMeters, radiusMiles, campus).catch(() => ({ lots: [], street: [] })),
+      overpassParking(place, radiusMeters, radiusMiles, campusMode).catch(() => ({ lots: [], street: [] })),
       Promise.resolve(curatedLotsFor(place, q))
     ]);
     const main = mainLotFor(place, q);
@@ -440,13 +424,11 @@ export default async function handler(req, res) {
       .filter(Boolean)
       .filter((item, index, arr) => arr.findIndex((other) => norm(other.name) === norm(item.name) && Math.abs(other.distance - item.distance) < 0.08) === index)
       .sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance)
-      .slice(0, campus ? 18 : 12);
+      .slice(0, 12);
     const street = mapped.street;
     const results = [...lots, ...street];
-    const info = campus
-      ? `Campus parking mode: showing named/ref campus lots and structures first. Unnamed mapped lots are lower priority because the map does not provide official lot names.`
-      : street.length ? `Showing named/estimated lots and verified mapped street parking within about ${minutes} minutes walking.` : `No verified mapped street-parking tags found here. Showing destination/customer lots and mapped lots first; verify all signs and access rules.`;
-    return res.status(200).json({ place, suggestions: [], results, sections: { lots, street }, radiusMinutes: minutes, radiusMiles, info, note: campus ? 'Campus restrictions are estimates from map tags. Verify official school permits, visitor payment, event restrictions, and signs.' : 'Availability is estimated until ParkLink sensors or live parking feeds are connected.' });
+    const info = campusMode ? 'Campus mode: showing named/ref campus lots first, then unnamed mapped lots if needed.' : street.length ? `Showing destination lots, mapped lots, and verified mapped street parking within about ${minutes} minutes walking.` : 'No verified mapped street-parking tags found here. Showing destination/customer lots and mapped lots first; verify all signs and access rules.';
+    return res.status(200).json({ place, suggestions: [], results, sections: { lots, street }, radiusMinutes: minutes, radiusMiles, info, note: 'Availability is estimated until ParkLink sensors or live parking feeds are connected.' });
   } catch (error) {
     return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: error.message || 'Parking search failed.' });
   }
