@@ -8,10 +8,10 @@ const ALL_CURATED_AREAS = [...CURATED_PARKING_ADDITIONS, ...CURATED_PARKING_AREA
 const CATEGORY_TERMS = {
   taco: ['taco', 'taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle'],
   tacos: ['taco', 'taco bell', 'del taco', 'taqueria', 'mexican restaurant', 'chipotle'],
-  mcdonalds: ['mcdonalds', "mcdonald's", 'mcdonald', 'fast food', 'burger'],
-  "mcdonald's": ['mcdonalds', "mcdonald's", 'mcdonald', 'fast food', 'burger'],
-  chickfila: ['chick-fil-a', 'chick fil a', 'chickfila', 'fast food chicken'],
-  'chick fil a': ['chick-fil-a', 'chick fil a', 'chickfila', 'fast food chicken'],
+  mcdonalds: ['mcdonald', 'mcdonalds', "mcdonald's", 'fast food', 'burger'],
+  "mcdonald's": ['mcdonald', 'mcdonalds', "mcdonald's", 'fast food', 'burger'],
+  chickfila: ['chick-fil-a', 'chick fil a', 'chickfila', 'chick', 'fast food chicken'],
+  'chick fil a': ['chick-fil-a', 'chick fil a', 'chickfila', 'chick', 'fast food chicken'],
   toy: ['toy store', 'toys', 'target', 'walmart', 'lego store', 'build a bear', 'gamestop'],
   toys: ['toy store', 'toys', 'target', 'walmart', 'lego store', 'build a bear', 'gamestop'],
   coffee: ['coffee', 'starbucks', 'cafe', 'peets coffee'],
@@ -125,11 +125,15 @@ function displayAddressFromTags(tags = {}, fallback = 'near saved search area') 
   const state = tags['addr:state'] || '';
   return [street, city, state].filter(Boolean).join(', ') || tags['addr:street'] || fallback;
 }
+function matchingTokens(query = '') {
+  const terms = [query, resolveAlias(query), ...searchTerms(query), ...norm(query).split(' ')];
+  return [...new Set(terms.map(norm).filter((term) => term.length > 1))];
+}
 function relevanceScore(place, query, anchor) {
   const hay = norm(`${place.shortName || ''} ${place.name || ''} ${place.address || ''} ${place.type || ''}`);
-  let score = place.curated ? 100 : place.localPoi ? 20 : 0;
-  norm(query).split(' ').filter(Boolean).forEach((token) => { if (hay.includes(token)) score += 10; });
-  if (anchor && place.lat && place.lng) score -= Math.min(25, distanceMiles(anchor.lat, anchor.lng, place.lat, place.lng) * 1.5);
+  let score = place.curated ? 1000 : place.localPoi ? 650 : place.localMap ? 500 : 0;
+  matchingTokens(query).forEach((token) => { if (hay.includes(token)) score += 35; });
+  if (anchor && place.lat && place.lng) score -= Math.min(500, distanceMiles(anchor.lat, anchor.lng, place.lat, place.lng) * 12);
   return score;
 }
 function aliasMatches(area, text) {
@@ -162,7 +166,8 @@ function curatedParkingDestinationRows(query, anchor) {
     mapQuery: area.name,
     distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, area.center.lat, area.center.lng) : 0,
     curated: true,
-    source: area.source
+    source: area.source,
+    localMap: true
   }));
 }
 function streetParkingMapCoverage(place) {
@@ -174,7 +179,7 @@ async function jsonFetch(url, timeoutMs = 4200) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json', 'User-Agent': 'ParkLink v10 map-first search' } });
+    const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json', 'User-Agent': 'ParkLink v10 local-first search' } });
     if (!response.ok) return [];
     return response.json();
   } catch { return []; } finally { clearTimeout(timer); }
@@ -183,7 +188,7 @@ async function postText(url, body, timeoutMs = 6500) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'User-Agent': 'ParkLink v10 map-first search' }, body });
+    const response = await fetch(url, { method: 'POST', signal: controller.signal, headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'User-Agent': 'ParkLink v10 local-first search' }, body });
     if (!response.ok) return { elements: [] };
     return response.json();
   } catch { return { elements: [] }; } finally { clearTimeout(timer); }
@@ -210,13 +215,13 @@ async function nominatimSearch(text, limit = 6, anchor = null, bounded = false) 
   }
   return jsonFetch(`https://nominatim.openstreetmap.org/search?${params}`, 4200);
 }
-function placeFromItem(item, anchor, source = 'map') {
+function placeFromItem(item, anchor, source = 'map', localMap = false) {
   const lat = Number(item.lat);
   const lng = Number(item.lon);
   const title = titleFrom(item);
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || !title) return null;
   const address = shortAddress(item.address || {}) || (item.display_name || '').split(',').slice(1, 5).map(clean).filter(Boolean).join(', ') || 'Address not listed';
-  return { id: `${source}-${item.place_id || `${lat}-${lng}`}`, name: `${title} - ${address}`, shortName: title, address, lat, lng, type: item.type || item.class || 'place', class: item.class || 'place', mapQuery: `${title}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, source };
+  return { id: `${source}-${item.place_id || `${lat}-${lng}`}`, name: `${title} - ${address}`, shortName: title, address, lat, lng, type: item.type || item.class || 'place', class: item.class || 'place', mapQuery: `${title}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, source, localMap };
 }
 function placeFromPoi(element, anchor, fallbackLabel) {
   const lat = element.lat ?? element.center?.lat;
@@ -225,23 +230,26 @@ function placeFromPoi(element, anchor, fallbackLabel) {
   const name = clean(tags.name || tags.brand || tags.operator || '');
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || !name) return null;
   const address = displayAddressFromTags(tags, fallbackLabel);
-  return { id: `poi-${element.type}-${element.id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: tags.shop || tags.amenity || tags.tourism || tags.leisure || tags.sport || 'place', class: 'poi', mapQuery: `${name}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, localPoi: true, source: 'local-map-poi' };
+  return { id: `poi-${element.type}-${element.id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: tags.shop || tags.amenity || tags.tourism || tags.leisure || tags.sport || 'place', class: 'poi', mapQuery: `${name}, ${address}`, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, localPoi: true, localMap: true, source: 'local-map-poi' };
 }
 function queryRegex(query = '') {
-  const raw = [query, resolveAlias(query), ...searchTerms(query), ...norm(query).split(' ')];
-  const terms = [...new Set(raw.map((term) => norm(term)).filter((term) => term.length > 1))].slice(0, 16);
+  const extras = [];
+  const text = norm(query);
+  if (text.includes('mcdonald')) extras.push('mcdonald');
+  if (text.includes('chick') || text.includes('fila') || text.includes('fil a')) extras.push('chick', 'fil', 'fila');
+  const terms = [...new Set([...matchingTokens(query), ...extras].map(norm).filter((term) => term.length > 1))].slice(0, 18);
   return terms.map(escapeRegex).join('|') || escapeRegex(norm(query));
 }
 async function localPoiSearch(query, anchor, label) {
   if (!anchor) return [];
   const regex = queryRegex(query);
   const body = `[out:json][timeout:18];(
-    node["name"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
-    way["name"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
-    relation["name"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
-    node["brand"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
-    way["brand"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
-    relation["brand"~"${regex}",i](around:40000,${anchor.lat},${anchor.lng});
+    node["name"~"${regex}",i](around:45000,${anchor.lat},${anchor.lng});
+    way["name"~"${regex}",i](around:45000,${anchor.lat},${anchor.lng});
+    relation["name"~"${regex}",i](around:45000,${anchor.lat},${anchor.lng});
+    node["brand"~"${regex}",i](around:45000,${anchor.lat},${anchor.lng});
+    way["brand"~"${regex}",i](around:45000,${anchor.lat},${anchor.lng});
+    relation["brand"~"${regex}",i](around:45000,${anchor.lat},${anchor.lng});
     node["amenity"~"restaurant|fast_food|cafe|bar|pub|biergarten|theatre|cinema",i](around:12000,${anchor.lat},${anchor.lng});
     way["amenity"~"restaurant|fast_food|cafe|bar|pub|biergarten|theatre|cinema",i](around:12000,${anchor.lat},${anchor.lng});
     node["shop"](around:12000,${anchor.lat},${anchor.lng});
@@ -259,36 +267,52 @@ async function localPoiSearch(query, anchor, label) {
 function disneyRows(query, anchor) {
   const text = norm(query);
   if (!text.includes('disney')) return [];
-  return DISNEY_DESTINATIONS.map(([id, name, address, lat, lng, mapQuery]) => ({ id: `curated-${id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: 'curated', class: 'destination', mapQuery, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, curated: true, source: 'curated' }));
+  return DISNEY_DESTINATIONS.map(([id, name, address, lat, lng, mapQuery]) => ({ id: `curated-${id}`, name: `${name} - ${address}`, shortName: name, address, lat, lng, type: 'curated', class: 'destination', mapQuery, distanceFromAnchor: anchor ? distanceMiles(anchor.lat, anchor.lng, lat, lng) : 0, curated: true, localMap: true, source: 'curated' }));
 }
-async function placesMode(req, res) {
-  const q = clean(req.query.q || '');
-  if (q.length < 2) return res.status(200).json({ suggestions: [], place: null });
-  const anchor = await getAnchor(req);
-  const area = homeText(req);
-  const areaLabel = area || anchor.label || 'saved search area';
-  const searchQueries = [];
-  if (area && !explicitLocation(q)) searchQueries.push(`${q} near ${area}`, `${q} ${area}`);
-  searchQueries.push(resolveAlias(q), q);
-  if (!explicitLocation(q)) searchQueries.push(`${q} California`);
-  searchTerms(q).forEach((term) => { if (area && !explicitLocation(term)) searchQueries.push(`${term} near ${area}`); searchQueries.push(term); });
-  const uniqueQueries = [...new Set(searchQueries.map(clean).filter(Boolean))].slice(0, 10);
-  const [mapRows, poiRows] = await Promise.all([
-    Promise.all(uniqueQueries.map((term, index) => nominatimSearch(term, index < 3 ? 7 : 4, anchor, false))).then((parts) => parts.flat()).catch(() => []),
-    localPoiSearch(q, anchor, areaLabel).catch(() => [])
-  ]);
+function dedupeAndSort(items, query, anchor) {
   const seen = new Set();
-  const suggestions = [...curatedParkingDestinationRows(q, anchor), ...disneyRows(q, anchor), ...mapRows.map((item) => placeFromItem(item, anchor)).filter(Boolean), ...poiRows]
-    .map((item) => ({ ...item, matchScore: relevanceScore(item, q, anchor) }))
+  return items
+    .map((item) => ({ ...item, matchScore: relevanceScore(item, query, anchor) }))
     .filter((item) => {
       const key = `${norm(item.shortName)}-${Math.round(item.lat * 10000)}-${Math.round(item.lng * 10000)}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     })
-    .sort((a, b) => b.matchScore - a.matchScore || a.distanceFromAnchor - b.distanceFromAnchor)
-    .slice(0, 15);
-  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-map-first-curated-data', anchor, areaLabel });
+    .sort((a, b) => b.matchScore - a.matchScore || a.distanceFromAnchor - b.distanceFromAnchor);
+}
+async function placesMode(req, res) {
+  const q = clean(req.query.q || '');
+  if (q.length < 2) return res.status(200).json({ suggestions: [], place: null });
+  const anchor = await getAnchor(req);
+  const area = homeText(req) || DEFAULT_CENTER.label;
+  const areaLabel = area || 'saved search area';
+  const localQueries = [];
+  if (!explicitLocation(q)) localQueries.push(`${q} near ${area}`, `${q} ${area}`, resolveAlias(q), q);
+  else localQueries.push(resolveAlias(q), q);
+  searchTerms(q).forEach((term) => {
+    if (!explicitLocation(term)) localQueries.push(`${term} near ${area}`);
+  });
+  const uniqueLocal = [...new Set(localQueries.map(clean).filter(Boolean))].slice(0, 8);
+  const [localRows, poiRows] = await Promise.all([
+    Promise.all(uniqueLocal.map((term) => nominatimSearch(term, 6, anchor, !explicitLocation(q)))).then((parts) => parts.flat()).catch(() => []),
+    localPoiSearch(q, anchor, areaLabel).catch(() => [])
+  ]);
+  const localCandidates = dedupeAndSort([
+    ...curatedParkingDestinationRows(q, anchor),
+    ...disneyRows(q, anchor),
+    ...localRows.map((item) => placeFromItem(item, anchor, 'local-map', true)).filter(Boolean),
+    ...poiRows
+  ], q, anchor).filter((item) => item.curated || item.distanceFromAnchor <= 45 || explicitLocation(q));
+
+  let suggestions = localCandidates;
+  if (suggestions.length < 4) {
+    const globalQueries = [...new Set([resolveAlias(q), q, `${q} California`, ...searchTerms(q)].map(clean).filter(Boolean))].slice(0, 6);
+    const globalRows = await Promise.all(globalQueries.map((term) => nominatimSearch(term, 5, anchor, false))).then((parts) => parts.flat()).catch(() => []);
+    suggestions = dedupeAndSort([...localCandidates, ...globalRows.map((item) => placeFromItem(item, anchor, 'global-map', false)).filter(Boolean)], q, anchor);
+  }
+  suggestions = suggestions.slice(0, 15);
+  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-local-first', anchor, areaLabel });
 }
 function basePlaceName(name = '') { return clean(name.split(' - ')[0].split(',')[0]); }
 function addressFromName(name = '') { return clean(name.split(' - ').slice(1).join(' - ')); }
@@ -400,8 +424,12 @@ export default async function handler(req, res) {
       place = { name: selectedName, shortName: basePlaceName(selectedName), address: addressFromName(selectedName), lat, lng, mapQuery: selectedName };
     } else {
       const anchor = await getAnchor(req);
-      const rows = await nominatimSearch(q, 4, anchor, false);
-      place = rows.map((item) => placeFromItem(item, anchor)).filter(Boolean)[0] || curatedParkingDestinationRows(q, anchor)[0] || disneyRows(q, anchor)[0] || null;
+      const placeRows = await placesMode({ ...req, query: { ...req.query, mode: 'places' } }, { status: () => ({ json: (value) => value }) });
+      place = placeRows?.place || null;
+      if (!place) {
+        const rows = await nominatimSearch(q, 4, anchor, !explicitLocation(q));
+        place = rows.map((item) => placeFromItem(item, anchor, 'local-map', true)).filter(Boolean)[0] || curatedParkingDestinationRows(q, anchor)[0] || disneyRows(q, anchor)[0] || null;
+      }
     }
     if (!place) return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: 'Destination not found.' });
     const campusMode = isCampus(place, q);
