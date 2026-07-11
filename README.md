@@ -17,3 +17,7 @@ npm run dev
 - Home dashboard with search, map preview, nearby spaces, and module cards
 - Parking space detail view
 - App info and prototype status panels
+
+## Deployment note
+
+Latest forced redeploy: ParkLink v10 search and parking cleanup.
