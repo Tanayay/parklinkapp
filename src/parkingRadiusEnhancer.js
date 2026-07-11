@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'parklink-parking-radius-minutes';
 const ADDRESS_KEY = 'parklink-search-address';
-const SEARCH_CACHE_KEY = 'parklink-v9-search-cache';
+const SEARCH_CACHE_KEY = 'parklink-v10-search-cache';
 const DEFAULT_MINUTES = 10;
 const VALID_MINUTES = [5, 10, 15, 20, 30];
 
@@ -30,45 +30,43 @@ function setCache(key, value) {
 }
 
 const originalFetch = window.fetch.bind(window);
-let activePlaceSearchController = null;
-
 window.fetch = async (input, init) => {
   try {
     const raw = typeof input === 'string' ? input : input?.url;
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
       const isPlaceSearch = url.searchParams.get('mode') === 'places';
-      url.pathname = '/api/parking-search-v9';
+      url.pathname = '/api/parking-search-v10';
+
       const ctx = getAddressContext();
       if (ctx) {
-        if (ctx.lat && ctx.lng) { url.searchParams.set('homeLat', String(ctx.lat)); url.searchParams.set('homeLng', String(ctx.lng)); }
+        if (ctx.lat && ctx.lng) {
+          url.searchParams.set('homeLat', String(ctx.lat));
+          url.searchParams.set('homeLng', String(ctx.lng));
+        }
         if (ctx.label) url.searchParams.set('homeText', ctx.label);
         if (ctx.address) url.searchParams.set('homeAddress', ctx.address);
         if (ctx.city) url.searchParams.set('homeCity', ctx.city);
         if (ctx.state) url.searchParams.set('homeState', ctx.state);
       }
       if (!isPlaceSearch) url.searchParams.set('radiusMinutes', String(getRadiusMinutes()));
-      const next = url.origin === window.location.origin ? `${url.pathname}${url.search}` : url.toString();
 
+      const next = url.origin === window.location.origin ? `${url.pathname}${url.search}` : url.toString();
       if (isPlaceSearch) {
         const key = cacheKey(url);
         const cached = getCache()[key];
         if (cached && Date.now() - cached.time < 5 * 60 * 1000) {
           return new Response(JSON.stringify(cached.value), { status: 200, headers: { 'Content-Type': 'application/json' } });
         }
-        if (activePlaceSearchController) activePlaceSearchController.abort();
-        activePlaceSearchController = new AbortController();
-        const response = await originalFetch(next, { ...init, signal: activePlaceSearchController.signal });
+        const response = await originalFetch(next, init);
         const clone = response.clone();
-        clone.json().then((data) => setCache(key, data)).catch(() => {});
+        clone.json().then(data => setCache(key, data)).catch(() => {});
         return response;
       }
       return originalFetch(next, init);
     }
-  } catch (error) {
-    if (error?.name === 'AbortError') {
-      return new Response(JSON.stringify({ suggestions: [], place: null, aborted: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-    }
+  } catch {
+    // Fall through to the original request.
   }
   return originalFetch(input, init);
 };
@@ -82,7 +80,7 @@ function createRadiusControl() {
   wrap.appendChild(text);
   const select = document.createElement('select');
   select.className = 'parklink-compact-select';
-  VALID_MINUTES.forEach((minutes) => {
+  VALID_MINUTES.forEach(minutes => {
     const option = document.createElement('option');
     option.value = String(minutes);
     option.textContent = `${minutes} min`;
@@ -104,7 +102,7 @@ function openAddressModal() {
       <div class="parklink-address-head">
         <span>Search area</span>
         <strong>Set your address</strong>
-        <p>ParkLink uses this like Uber: searches stay near this city/address unless you type a specific city like “Disney Anaheim”.</p>
+        <p>ParkLink uses this as your search anchor. Searches like “taco” or “toys” stay near this area. Searches like “Disney Anaheim” can still go outside it.</p>
       </div>
       <label>Street / place / address<input class="pl-address" placeholder="22420 Ocean Ave" value="${current.address || ''}"></label>
       <div class="pl-address-grid">
@@ -122,11 +120,11 @@ function openAddressModal() {
   const error = overlay.querySelector('.pl-address-error');
   function close(){ overlay.remove(); }
   overlay.querySelector('.pl-cancel').addEventListener('click', close);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   overlay.querySelector('.pl-current').addEventListener('click', () => {
     if (!navigator.geolocation) { error.textContent = 'Location is not available in this browser.'; return; }
     error.textContent = 'Getting your location...';
-    navigator.geolocation.getCurrentPosition((pos) => {
+    navigator.geolocation.getCurrentPosition(pos => {
       setAddressContext({ label: 'Current location', lat: pos.coords.latitude, lng: pos.coords.longitude, address: '', city: '', state: '' });
       close();
     }, () => { error.textContent = 'Location permission was denied.'; }, { enableHighAccuracy: true, timeout: 10000 });
@@ -157,7 +155,7 @@ function createAddressControl() {
 }
 
 function getSearchInput() { return document.querySelector('.ai-phone-safe .ai-search-card input[placeholder*="Search"]'); }
-function getSearchButton() { return [...document.querySelectorAll('.ai-phone-safe .ai-search-card button')].find((button) => button.textContent.includes('Find matching places')); }
+function getSearchButton() { return [...document.querySelectorAll('.ai-phone-safe .ai-search-card button')].find(button => button.textContent.includes('Find matching places')); }
 
 let searchTimer;
 function attachLiveSearch() {
@@ -173,7 +171,7 @@ function attachLiveSearch() {
     searchTimer = setTimeout(() => {
       const button = getSearchButton();
       if (button && !button.disabled) button.click();
-    }, 650);
+    }, 700);
   });
 }
 
