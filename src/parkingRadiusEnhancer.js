@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'parklink-parking-radius-minutes';
 const ADDRESS_KEY = 'parklink-search-address';
+const SEARCH_CACHE_KEY = 'parklink-fast-search-cache';
 const DEFAULT_MINUTES = 10;
 const VALID_MINUTES = [5, 10, 15, 20, 30];
 
@@ -19,14 +20,29 @@ function addressLabel(ctx) {
   if (!ctx) return 'Set your search area';
   return ctx.label || [ctx.address, ctx.city, ctx.state].filter(Boolean).join(', ') || 'Saved search area';
 }
+function cacheKey(url) {
+  return `${url.pathname}?${url.searchParams.toString()}`;
+}
+function getCache() {
+  try { return JSON.parse(sessionStorage.getItem(SEARCH_CACHE_KEY) || '{}'); } catch { return {}; }
+}
+function setCache(key, value) {
+  const cache = getCache();
+  cache[key] = { value, time: Date.now() };
+  const entries = Object.entries(cache).slice(-40);
+  sessionStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
+}
 
 const originalFetch = window.fetch.bind(window);
-window.fetch = (input, init) => {
+let activePlaceSearchController = null;
+
+window.fetch = async (input, init) => {
   try {
     const raw = typeof input === 'string' ? input : input?.url;
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
-      url.pathname = '/api/parking-search-v7';
+      const isPlaceSearch = url.searchParams.get('mode') === 'places';
+      url.pathname = isPlaceSearch ? '/api/place-search-fast' : '/api/parking-search-v7';
       const ctx = getAddressContext();
       if (ctx) {
         if (ctx.lat && ctx.lng) { url.searchParams.set('homeLat', String(ctx.lat)); url.searchParams.set('homeLng', String(ctx.lng)); }
@@ -35,12 +51,27 @@ window.fetch = (input, init) => {
         if (ctx.city) url.searchParams.set('homeCity', ctx.city);
         if (ctx.state) url.searchParams.set('homeState', ctx.state);
       }
-      if (url.searchParams.get('mode') !== 'places') url.searchParams.set('radiusMinutes', String(getRadiusMinutes()));
+      if (!isPlaceSearch) url.searchParams.set('radiusMinutes', String(getRadiusMinutes()));
       const next = url.origin === window.location.origin ? `${url.pathname}${url.search}` : url.toString();
+
+      if (isPlaceSearch) {
+        const key = cacheKey(url);
+        const cached = getCache()[key];
+        if (cached && Date.now() - cached.time < 5 * 60 * 1000) {
+          return new Response(JSON.stringify(cached.value), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        if (activePlaceSearchController) activePlaceSearchController.abort();
+        activePlaceSearchController = new AbortController();
+        const response = await originalFetch(next, { ...init, signal: activePlaceSearchController.signal });
+        const clone = response.clone();
+        clone.json().then((data) => setCache(key, data)).catch(() => {});
+        return response;
+      }
+
       return originalFetch(next, init);
     }
-  } catch {
-    // Fall through to original request.
+  } catch (error) {
+    if (error?.name === 'AbortError') return new Response(JSON.stringify({ suggestions: [], place: null, aborted: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
   return originalFetch(input, init);
 };
@@ -112,7 +143,7 @@ function openAddressModal() {
     error.textContent = 'Saving search area...';
     try {
       const params = new URLSearchParams({ mode: 'places', q: label });
-      const response = await originalFetch(`/api/parking-search-v7?${params.toString()}`);
+      const response = await originalFetch(`/api/place-search-fast?${params.toString()}`);
       const data = await response.json().catch(() => ({}));
       const place = data.place || data.suggestions?.[0];
       setAddressContext({ label: place?.address || label, address, city, state, lat: place?.lat, lng: place?.lng });
@@ -151,11 +182,11 @@ function attachLiveSearch() {
   input.addEventListener('input', () => {
     clearTimeout(searchTimer);
     const value = input.value.trim();
-    if (value.length < 2) return;
+    if (value.length < 3) return;
     searchTimer = setTimeout(() => {
       const button = getSearchButton();
       if (button && !button.disabled) button.click();
-    }, 450);
+    }, 850);
   });
 }
 
