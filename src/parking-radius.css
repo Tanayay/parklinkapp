@@ -3,25 +3,54 @@
   box-sizing: border-box;
 }
 
-.compact-radius-control {
+.compact-radius-control,
+.parklink-location-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   margin: 10px 0 12px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   border: 1px solid rgba(125,211,252,.16);
-  border-radius: 14px;
-  background: rgba(255,255,255,.055);
+  border-radius: 16px;
+  background: rgba(11, 24, 48, .88);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
   overflow: hidden;
 }
 
-.compact-radius-control > span {
+.compact-radius-control > span,
+.parklink-location-card span {
   min-width: 0;
-  color: rgba(255,255,255,.74);
-  font-size: 12px;
-  font-weight: 800;
+  color: rgba(255,255,255,.58);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.parklink-location-card div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.parklink-location-card strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(255,255,255,.92);
+  font-size: 13px;
+}
+
+.parklink-location-card button {
+  border: 1px solid rgba(96,165,250,.22);
+  background: rgba(15, 35, 68, .92);
+  color: #dff4ff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .parklink-compact-select {
@@ -29,42 +58,162 @@
   min-width: 92px;
   max-width: 110px;
   border: 1px solid rgba(125,211,252,.25);
-  border-radius: 10px;
-  background: rgba(7,18,38,.96);
+  border-radius: 12px;
+  background: #0b1830;
   color: #fff;
-  padding: 7px 28px 7px 10px;
+  padding: 8px 28px 8px 10px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
   outline: none;
+  box-shadow: 0 8px 20px rgba(0,0,0,.16);
 }
 
 .parklink-compact-select option {
-  background: #071226;
+  background: #0b1830;
   color: #fff;
 }
 
 .ai-phone-safe .place-choice-list {
-  max-height: 270px;
+  max-height: 285px;
   overflow-y: auto;
   overflow-x: hidden;
+  padding-right: 3px;
 }
 
 .ai-phone-safe .place-choice-card {
   width: 100%;
   max-width: 100%;
+  align-items: flex-start;
+  background: rgba(11, 24, 48, .72) !important;
+  border-color: rgba(148,163,184,.16) !important;
+}
+
+.ai-phone-safe .place-choice-card strong {
+  display: block;
+  color: rgba(255,255,255,.95);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 285px;
+}
+
+.ai-phone-safe .place-choice-card span,
+.ai-phone-safe .place-choice-card small {
+  display: block;
+  margin-top: 3px;
+  color: rgba(203,213,225,.72);
+  font-size: 11px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.parklink-address-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(2, 6, 23, .72);
+  backdrop-filter: blur(14px);
+}
+
+.parklink-address-card {
+  width: min(390px, 100%);
+  border: 1px solid rgba(125,211,252,.18);
+  border-radius: 26px;
+  padding: 20px;
+  background: linear-gradient(180deg, rgba(15, 32, 60, .98), rgba(8, 18, 36, .98));
+  box-shadow: 0 24px 70px rgba(0,0,0,.42);
+  color: white;
+}
+
+.parklink-address-head {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.parklink-address-head span {
+  color: rgba(125,211,252,.9);
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+.parklink-address-head strong {
+  font-size: 25px;
+  letter-spacing: -.03em;
+}
+
+.parklink-address-head p {
+  margin: 0;
+  color: rgba(226,232,240,.72);
+  line-height: 1.35;
+  font-size: 13px;
+}
+
+.parklink-address-card label {
+  display: grid;
+  gap: 7px;
+  color: rgba(226,232,240,.76);
+  font-size: 12px;
+  font-weight: 900;
+  margin: 10px 0;
+}
+
+.parklink-address-card input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(148,163,184,.18);
+  border-radius: 15px;
+  background: rgba(2, 6, 23, .45);
+  color: white;
+  padding: 12px 13px;
+  outline: none;
+  font-size: 14px;
+}
+
+.pl-address-grid {
+  display: grid;
+  grid-template-columns: 1.4fr .8fr;
+  gap: 10px;
+}
+
+.pl-address-error {
+  min-height: 18px;
+  color: #fecdd3;
+  font-size: 12px;
+  margin: 4px 0 10px;
+}
+
+.pl-address-actions {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 9px;
+}
+
+.pl-address-actions button {
+  border: 1px solid rgba(125,211,252,.18);
+  border-radius: 14px;
+  background: rgba(15, 35, 68, .9);
+  color: #e0f7ff;
+  padding: 10px 11px;
+  font-weight: 900;
+}
+
+.pl-address-actions .pl-save {
+  background: #1d72f3;
+  border-color: rgba(125,211,252,.4);
+  color: white;
 }
 
 @media (max-width: 390px) {
-  .compact-radius-control {
-    padding: 8px 9px;
-  }
-
-  .compact-radius-control > span {
-    font-size: 11px;
-  }
-
-  .parklink-compact-select {
-    min-width: 86px;
-    font-size: 11px;
-  }
+  .compact-radius-control { padding: 8px 9px; }
+  .compact-radius-control > span { font-size: 10px; }
+  .parklink-compact-select { min-width: 86px; font-size: 11px; }
+  .pl-address-actions { grid-template-columns: 1fr; }
+  .pl-address-grid { grid-template-columns: 1fr; }
 }
