@@ -17,7 +17,7 @@ window.fetch = (input, init) => {
     const raw = typeof input === 'string' ? input : input?.url;
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
-      url.pathname = '/api/parking-search-v3';
+      url.pathname = '/api/parking-search-v5';
       if (!url.searchParams.has('mode') || url.searchParams.get('mode') !== 'places') {
         url.searchParams.set('radiusMinutes', String(getRadiusMinutes()));
       }
