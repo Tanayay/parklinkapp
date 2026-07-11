@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'parklink-parking-radius-minutes';
 const ADDRESS_KEY = 'parklink-search-address';
-const SEARCH_CACHE_KEY = 'parklink-fast-search-cache';
+const SEARCH_CACHE_KEY = 'parklink-stable-search-cache';
 const DEFAULT_MINUTES = 10;
 const VALID_MINUTES = [5, 10, 15, 20, 30];
 
@@ -14,23 +14,19 @@ function getAddressContext() {
 }
 function setAddressContext(value) {
   localStorage.setItem(ADDRESS_KEY, JSON.stringify(value));
+  sessionStorage.removeItem(SEARCH_CACHE_KEY);
   window.dispatchEvent(new CustomEvent('parklink-address-updated'));
 }
 function addressLabel(ctx) {
   if (!ctx) return 'Set your search area';
   return ctx.label || [ctx.address, ctx.city, ctx.state].filter(Boolean).join(', ') || 'Saved search area';
 }
-function cacheKey(url) {
-  return `${url.pathname}?${url.searchParams.toString()}`;
-}
-function getCache() {
-  try { return JSON.parse(sessionStorage.getItem(SEARCH_CACHE_KEY) || '{}'); } catch { return {}; }
-}
+function cacheKey(url) { return `${url.pathname}?${url.searchParams.toString()}`; }
+function getCache() { try { return JSON.parse(sessionStorage.getItem(SEARCH_CACHE_KEY) || '{}'); } catch { return {}; } }
 function setCache(key, value) {
   const cache = getCache();
   cache[key] = { value, time: Date.now() };
-  const entries = Object.entries(cache).slice(-40);
-  sessionStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
+  sessionStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(Object.fromEntries(Object.entries(cache).slice(-30))));
 }
 
 const originalFetch = window.fetch.bind(window);
@@ -42,7 +38,7 @@ window.fetch = async (input, init) => {
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
       const isPlaceSearch = url.searchParams.get('mode') === 'places';
-      url.pathname = isPlaceSearch ? '/api/place-search-addressed' : '/api/parking-search-v7';
+      url.pathname = isPlaceSearch ? '/api/place-search-stable' : '/api/parking-search-v7';
       const ctx = getAddressContext();
       if (ctx) {
         if (ctx.lat && ctx.lng) { url.searchParams.set('homeLat', String(ctx.lat)); url.searchParams.set('homeLng', String(ctx.lng)); }
@@ -67,11 +63,12 @@ window.fetch = async (input, init) => {
         clone.json().then((data) => setCache(key, data)).catch(() => {});
         return response;
       }
-
       return originalFetch(next, init);
     }
   } catch (error) {
-    if (error?.name === 'AbortError') return new Response(JSON.stringify({ suggestions: [], place: null, aborted: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    if (error?.name === 'AbortError') {
+      return new Response(JSON.stringify({ suggestions: [], place: null, aborted: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
   }
   return originalFetch(input, init);
 };
@@ -134,24 +131,14 @@ function openAddressModal() {
       close();
     }, () => { error.textContent = 'Location permission was denied.'; }, { enableHighAccuracy: true, timeout: 10000 });
   });
-  overlay.querySelector('.pl-save').addEventListener('click', async () => {
+  overlay.querySelector('.pl-save').addEventListener('click', () => {
     const address = overlay.querySelector('.pl-address').value.trim();
     const city = overlay.querySelector('.pl-city').value.trim();
     const state = overlay.querySelector('.pl-state').value.trim();
     const label = [address, city, state].filter(Boolean).join(', ');
     if (!city && !address) { error.textContent = 'Add at least a city, or use current location.'; return; }
-    error.textContent = 'Saving search area...';
-    try {
-      const params = new URLSearchParams({ q: label, homeText: label });
-      const response = await originalFetch(`/api/place-search-addressed?${params.toString()}`);
-      const data = await response.json().catch(() => ({}));
-      const place = data.place || data.suggestions?.[0];
-      setAddressContext({ label: place?.address || label, address, city, state, lat: place?.lat, lng: place?.lng });
-      close();
-    } catch {
-      setAddressContext({ label, address, city, state });
-      close();
-    }
+    setAddressContext({ label, address, city, state });
+    close();
   });
 }
 
@@ -186,7 +173,7 @@ function attachLiveSearch() {
     searchTimer = setTimeout(() => {
       const button = getSearchButton();
       if (button && !button.disabled) button.click();
-    }, 850);
+    }, 650);
   });
 }
 
