@@ -12,6 +12,11 @@ const CATEGORY_TERMS = {
   grocery: ['grocery store', 'supermarket', 'ralphs', 'vons', 'trader joes', 'whole foods', 'target', 'walmart'],
   topgolf: ['topgolf', 'top golf', 'golf driving range', 'golf entertainment'],
   golf: ['topgolf', 'golf driving range', 'golf course', 'golf entertainment'],
+  school: ['college', 'university', 'campus'],
+  schools: ['college', 'university', 'campus'],
+  college: ['college', 'community college', 'university', 'campus'],
+  colleges: ['college', 'community college', 'university', 'campus'],
+  university: ['university', 'college', 'campus'],
   disney: ['disneyland resort anaheim ca', 'downtown disney district anaheim ca', 'disney california adventure anaheim ca', 'disney store', 'walt disney world resort florida', 'disney springs florida'],
   disneyland: ['disneyland resort anaheim ca', 'downtown disney district anaheim ca', 'disney california adventure anaheim ca'],
   disneyworld: ['walt disney world resort florida', 'magic kingdom park florida', 'epcot florida', 'disney springs florida']
@@ -20,6 +25,17 @@ const CATEGORY_TERMS = {
 const ALIASES = {
   cpp: 'Cal Poly Pomona, Pomona, CA',
   'cal poly pomona': 'Cal Poly Pomona, Pomona, CA',
+  'cal poly': 'Cal Poly Pomona, Pomona, CA',
+  ucla: 'University of California Los Angeles, Los Angeles, CA',
+  usc: 'University of Southern California, Los Angeles, CA',
+  uci: 'University of California Irvine, Irvine, CA',
+  ucsd: 'University of California San Diego, La Jolla, CA',
+  ucsb: 'University of California Santa Barbara, Santa Barbara, CA',
+  ucr: 'University of California Riverside, Riverside, CA',
+  csulb: 'California State University Long Beach, Long Beach, CA',
+  csuf: 'California State University Fullerton, Fullerton, CA',
+  csudh: 'California State University Dominguez Hills, Carson, CA',
+  sdsu: 'San Diego State University, San Diego, CA',
   disneyworld: 'Walt Disney World Resort, Lake Buena Vista, FL',
   'disney world': 'Walt Disney World Resort, Lake Buena Vista, FL',
   disneyland: 'Disneyland Resort, Anaheim, CA',
@@ -63,6 +79,12 @@ const CURATED_DESTINATIONS = {
 const CPP_LOTS = [
   ['cpp-lot-2', 'Cal Poly Pomona Lot 2', 'Campus parking lot', 34.05945, -117.82192, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
   ['cpp-lot-q', 'Cal Poly Pomona Lot Q', 'Campus parking lot', 34.05372, -117.81598, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-m', 'Cal Poly Pomona Lot M', 'Campus parking lot', 34.05215, -117.8206, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-b', 'Cal Poly Pomona Lot B', 'Campus parking lot', 34.06105, -117.82355, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-c', 'Cal Poly Pomona Lot C', 'Campus parking lot', 34.06155, -117.8205, 'University Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-e', 'Cal Poly Pomona Lot E', 'Campus parking lot', 34.05895, -117.8159, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-f', 'Cal Poly Pomona Lot F', 'Campus parking lot', 34.05715, -117.81495, 'South Campus Dr, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
+  ['cpp-lot-j', 'Cal Poly Pomona Lot J', 'Campus parking lot', 34.05285, -117.8248, 'Temple Ave, Pomona, CA', 'Campus lot. CPP permit/payment rules may apply.'],
   ['cpp-ps1', 'Cal Poly Pomona Parking Structure 1', 'Campus parking structure', 34.0572, -117.82755, 'Kellogg Dr, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.'],
   ['cpp-ps2', 'Cal Poly Pomona Parking Structure 2', 'Campus parking structure', 34.05495, -117.8247, 'Temple Ave, Pomona, CA', 'Campus structure. CPP permit/payment rules may apply.']
 ];
@@ -157,6 +179,10 @@ function relevanceScore(place, query, anchor) {
   if (anchor && place.lat && place.lng) score -= Math.min(35, distanceMiles(anchor.lat, anchor.lng, place.lat, place.lng) * 2);
   return score;
 }
+function isCampusQuery(value = '') {
+  const text = norm(value);
+  return text.includes('college') || text.includes('university') || text.includes('campus') || text.includes('cal poly') || text.includes('cal state') || text.includes('csu') || text.includes('uc ') || text.includes('ucla') || text.includes('usc') || text.includes('community college') || text.includes('school');
+}
 async function jsonFetch(url, timeoutMs = 4200) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -170,7 +196,7 @@ async function jsonFetch(url, timeoutMs = 4200) {
     clearTimeout(timer);
   }
 }
-async function postText(url, body, timeoutMs = 5500) {
+async function postText(url, body, timeoutMs = 6500) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -231,15 +257,16 @@ async function localPoiSearch(query, anchor, label) {
     relation["name"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
     node["brand"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
     way["brand"~"${regex}",i](around:30000,${anchor.lat},${anchor.lng});
-    node["amenity"~"restaurant|fast_food|cafe",i](around:7000,${anchor.lat},${anchor.lng});
-    way["amenity"~"restaurant|fast_food|cafe",i](around:7000,${anchor.lat},${anchor.lng});
+    node["amenity"~"restaurant|fast_food|cafe|college|university|school",i](around:12000,${anchor.lat},${anchor.lng});
+    way["amenity"~"restaurant|fast_food|cafe|college|university|school",i](around:12000,${anchor.lat},${anchor.lng});
+    relation["amenity"~"college|university|school",i](around:30000,${anchor.lat},${anchor.lng});
     node["shop"~"toys|department_store|supermarket|convenience|mall",i](around:9000,${anchor.lat},${anchor.lng});
     way["shop"~"toys|department_store|supermarket|convenience|mall",i](around:9000,${anchor.lat},${anchor.lng});
     node["sport"="golf"](around:30000,${anchor.lat},${anchor.lng});
     way["sport"="golf"](around:30000,${anchor.lat},${anchor.lng});
     node["leisure"~"golf_course|sports_centre",i](around:30000,${anchor.lat},${anchor.lng});
     way["leisure"~"golf_course|sports_centre",i](around:30000,${anchor.lat},${anchor.lng});
-  );out center tags 120;`;
+  );out center tags 140;`;
   const data = await postText('https://overpass-api.de/api/interpreter', body, 5600);
   return (data?.elements || []).map((element) => placeFromPoi(element, anchor, label)).filter(Boolean);
 }
@@ -274,14 +301,14 @@ async function placesMode(req, res) {
     })
     .sort((a, b) => b.matchScore - a.matchScore || a.distanceFromAnchor - b.distanceFromAnchor)
     .slice(0, 12);
-  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-curated-local', anchor, areaLabel });
+  return res.status(200).json({ suggestions, place: suggestions[0] || null, mode: 'v10-campus-local', anchor, areaLabel });
 }
 function basePlaceName(name = '') { return clean(name.split(' - ')[0].split(',')[0]); }
 function addressFromName(name = '') { return clean(name.split(' - ').slice(1).join(' - ')); }
 function accessLabel(tags = {}) {
   if (tags.access === 'private') return 'Private access — verify permission';
   if (tags.access === 'customers') return 'Customer/shared parking — verify signs';
-  if (tags.access === 'permit') return 'Permit parking — verify permit rules';
+  if (tags.access === 'permit' || tags.access === 'permissive') return 'Permit/controlled parking — verify permit rules';
   return 'Public/unspecified access — check posted signs';
 }
 function accessibility(tags = {}) {
@@ -290,15 +317,30 @@ function accessibility(tags = {}) {
   if (tags.wheelchair === 'no') return 'Not wheelchair accessible';
   return 'Accessibility not confirmed';
 }
-function parkingArea(tags = {}) {
-  if (tags.parking === 'multi-storey') return 'Parking structure';
+function parkingArea(tags = {}, campus = false) {
+  if (tags.parking === 'multi-storey') return campus ? 'Campus parking structure' : 'Parking structure';
   if (tags.parking === 'underground') return 'Underground parking';
-  if (tags.parking === 'surface') return 'Surface parking lot';
-  return 'Mapped parking lot';
+  if (tags.parking === 'surface') return campus ? 'Campus surface lot' : 'Surface parking lot';
+  return campus ? 'Campus mapped parking lot' : 'Mapped parking lot';
 }
 function isMajorDestination(place, query = '') {
   const text = norm(`${place?.name || ''} ${query}`);
-  return text.includes('disney') || text.includes('cal poly pomona') || text.includes('stadium') || text.includes('airport') || text.includes('arena') || text.includes('theme park') || text.includes('topgolf') || text.includes('top golf');
+  return text.includes('disney') || text.includes('stadium') || text.includes('airport') || text.includes('arena') || text.includes('theme park') || text.includes('topgolf') || text.includes('top golf');
+}
+function isCampusDestination(place, query = '') {
+  const text = norm(`${place?.name || ''} ${place?.address || ''} ${query}`);
+  return isCampusQuery(text) || text.includes('cal poly pomona') || text.includes('ucla') || text.includes('usc') || text.includes('csulb') || text.includes('csuf') || text.includes('sdsu');
+}
+function campusLotTitle(tags = {}, street = '') {
+  const official = clean(tags.name || tags.official_name || tags.alt_name || tags.ref || '');
+  if (official && !isGenericName(official)) {
+    if (/^(lot|parking|structure|garage|ps\s*\d|p\d|[a-z]\d?|\d+[a-z]?)\b/i.test(official)) return official.match(/^lot\b/i) ? official : official;
+    if (/^[a-z0-9-]{1,5}$/i.test(official)) return `Lot ${official.toUpperCase()}`;
+    return official;
+  }
+  if (tags.ref && /^[a-z0-9-]{1,6}$/i.test(tags.ref)) return `Lot ${String(tags.ref).toUpperCase()}`;
+  if (street) return `Unnamed mapped campus lot near ${street}`;
+  return 'Unnamed mapped campus lot';
 }
 function curatedLotsFor(place, query = '') {
   const text = norm(`${place?.name || ''} ${query}`);
@@ -317,24 +359,26 @@ function curatedLotsFor(place, query = '') {
   }).sort((a, b) => a.distance - b.distance);
 }
 function mainLotFor(place, query = '') {
-  if (isMajorDestination(place, query)) return null;
+  if (isMajorDestination(place, query) || isCampusDestination(place, query)) return null;
   const name = basePlaceName(place.name || query);
   const address = place.address || addressFromName(place.name) || 'Address not listed';
   if (!name || isGenericName(name)) return null;
   return { id: `main-${Math.round(place.lat * 10000)}-${Math.round(place.lng * 10000)}`, name: `Main Lot — ${name}`, fullName: `Main Lot — ${name}`, address, area: 'Likely customer/shared lot', bestLot: `${address} • verify signs/customer access`, distance: 0.03, capacity: 20, price: 'Customer/shared parking rules may apply', walk: '1-2 min walk', reason: `Best first check for ${name}. This is an estimated customer/shared lot near the destination; verify posted signs, towing rules, and access limits.`, lat: place.lat, lng: place.lng, mapQuery: `${name} parking, ${address}`, kind: 'lot', source: 'ParkLink destination-lot estimate', accessibility: 'Accessibility not confirmed', priority: 1, availability: availabilityFor(`main-${name}`, 0.03, 1) };
 }
-async function overpassParking(place, radiusMeters, radiusMiles) {
-  const body = `[out:json][timeout:18];(
-    node["amenity"="parking"](around:${radiusMeters},${place.lat},${place.lng});
-    way["amenity"="parking"](around:${radiusMeters},${place.lat},${place.lng});
-    relation["amenity"="parking"](around:${radiusMeters},${place.lat},${place.lng});
-    way["highway"]["name"](around:${radiusMeters},${place.lat},${place.lng});
-  );out center tags 100;`;
-  const data = await postText('https://overpass-api.de/api/interpreter', body, 6200);
+async function overpassParking(place, radiusMeters, radiusMiles, campus = false) {
+  const searchMeters = campus ? Math.max(radiusMeters, 3200) : radiusMeters;
+  const searchMiles = campus ? Math.max(radiusMiles, 2.0) : radiusMiles;
+  const body = `[out:json][timeout:20];(
+    node["amenity"="parking"](around:${searchMeters},${place.lat},${place.lng});
+    way["amenity"="parking"](around:${searchMeters},${place.lat},${place.lng});
+    relation["amenity"="parking"](around:${searchMeters},${place.lat},${place.lng});
+    way["highway"]["name"](around:${searchMeters},${place.lat},${place.lng});
+  );out center tags 180;`;
+  const data = await postText('https://overpass-api.de/api/interpreter', body, 7200);
   const elements = data?.elements || [];
   const roads = elements.filter((e) => e.tags?.highway && e.tags?.name).map((e) => ({ name: e.tags.name, lat: e.center?.lat, lng: e.center?.lon, tags: e.tags })).filter((e) => e.lat && e.lng);
   function nearestRoad(lat, lng) {
-    return roads.map((road) => ({ ...road, distance: distanceMiles(lat, lng, road.lat, road.lng) })).filter((road) => road.distance <= 0.25).sort((a, b) => a.distance - b.distance)[0] || null;
+    return roads.map((road) => ({ ...road, distance: distanceMiles(lat, lng, road.lat, road.lng) })).filter((road) => road.distance <= 0.35).sort((a, b) => a.distance - b.distance)[0] || null;
   }
   const seen = new Set();
   const lots = elements.filter((e) => e.tags?.amenity === 'parking').map((item) => {
@@ -342,19 +386,21 @@ async function overpassParking(place, radiusMeters, radiusMiles) {
     const lng = item.lon ?? item.center?.lon;
     if (!lat || !lng) return null;
     const distance = distanceMiles(place.lat, place.lng, lat, lng);
-    if (distance > radiusMiles) return null;
+    if (distance > searchMiles) return null;
     const tags = item.tags || {};
     const road = nearestRoad(lat, lng);
-    const official = clean(tags.name || tags.operator || tags.brand || tags.ref || '');
     const street = clean(tags['addr:street'] || road?.name || '');
-    const title = official && !isGenericName(official) ? official : street ? `Parking near ${street}` : `Parking near ${basePlaceName(place.name)}`;
+    const official = clean(tags.name || tags.official_name || tags.alt_name || tags.ref || '');
+    const title = campus ? campusLotTitle(tags, street) : official && !isGenericName(official) ? official : street ? `Parking near ${street}` : `Parking near ${basePlaceName(place.name)}`;
     const key = `${title}-${Math.round(lat * 10000)}-${Math.round(lng * 10000)}`;
     if (seen.has(key)) return null;
     seen.add(key);
     const address = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ') || street || place.address || addressFromName(place.name) || 'Address not listed';
-    return { id: `${item.type}-${item.id}`, name: title, fullName: official || title, address, area: parkingArea(tags), bestLot: `${address} • ${accessLabel(tags)}`, distance, capacity: Number(tags.capacity || (tags.parking === 'multi-storey' ? 400 : 70)), price: tags.fee === 'yes' ? 'Payment indicated' : tags.fee === 'no' ? 'Marked free' : 'Fee unknown', walk: walkText(distance), reason: `${official ? 'Named mapped parking area' : 'Mapped parking area'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.`, lat, lng, mapQuery: `${title}, ${address}`, kind: 'lot', source: 'OpenStreetMap parking data', accessibility: accessibility(tags), priority: official ? 3 : 4, availability: availabilityFor(`${item.type}-${item.id}`, distance, official ? 3 : 4) };
-  }).filter(Boolean).sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance).slice(0, 10);
-  const street = roads.map((road, index) => {
+    const namedCampus = campus && !title.toLowerCase().startsWith('unnamed');
+    const priority = campus ? (namedCampus ? 1 : 7) : (official ? 3 : 4);
+    return { id: `${item.type}-${item.id}`, name: title, fullName: official || title, address, area: parkingArea(tags, campus), bestLot: `${address} • ${accessLabel(tags)}`, distance, capacity: Number(tags.capacity || (tags.parking === 'multi-storey' ? 400 : 70)), price: tags.fee === 'yes' ? 'Payment indicated' : tags.fee === 'no' ? 'Marked free' : campus ? 'Permit/payment rules may apply' : 'Fee unknown', walk: walkText(distance), reason: campus ? `${namedCampus ? 'Named/ref campus parking area' : 'Mapped campus parking without an official name/ref in map data'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.` : `${official ? 'Named mapped parking area' : 'Mapped parking area'} near ${basePlaceName(place.name)}. ${accessLabel(tags)}. ${accessibility(tags)}.`, lat, lng, mapQuery: `${title}, ${address}`, kind: 'lot', source: campus ? 'OpenStreetMap campus parking data' : 'OpenStreetMap parking data', accessibility: accessibility(tags), priority, availability: availabilityFor(`${item.type}-${item.id}`, distance, priority) };
+  }).filter(Boolean).sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance).slice(0, campus ? 18 : 10);
+  const street = campus ? [] : roads.map((road, index) => {
     const tags = road.tags || {};
     const hasVerifiedParking = Boolean(tags['parking:lane:both'] || tags['parking:lane:left'] || tags['parking:lane:right'] || tags['parking:both'] || tags['parking:left'] || tags['parking:right']);
     if (!hasVerifiedParking) return null;
@@ -381,11 +427,12 @@ export default async function handler(req, res) {
       place = rows[0] ? placeFromItem(rows[0], anchor) : curatedDestinationRows(q, req, anchor)[0] || null;
     }
     if (!place) return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: 'Destination not found.' });
-    const minutes = Math.min(60, Math.max(5, Number(req.query.radiusMinutes || 10)));
-    const radiusMiles = milesFor(minutes);
-    const radiusMeters = metersFor(minutes);
+    const campus = isCampusDestination(place, q);
+    const minutes = Math.min(60, Math.max(5, Number(req.query.radiusMinutes || (campus ? 20 : 10))));
+    const radiusMiles = campus ? Math.max(milesFor(minutes), 2.0) : milesFor(minutes);
+    const radiusMeters = metersFor(campus ? Math.max(minutes, 20) : minutes);
     const [mapped, curated] = await Promise.all([
-      overpassParking(place, radiusMeters, radiusMiles).catch(() => ({ lots: [], street: [] })),
+      overpassParking(place, radiusMeters, radiusMiles, campus).catch(() => ({ lots: [], street: [] })),
       Promise.resolve(curatedLotsFor(place, q))
     ]);
     const main = mainLotFor(place, q);
@@ -393,11 +440,13 @@ export default async function handler(req, res) {
       .filter(Boolean)
       .filter((item, index, arr) => arr.findIndex((other) => norm(other.name) === norm(item.name) && Math.abs(other.distance - item.distance) < 0.08) === index)
       .sort((a, b) => (a.priority ?? 5) - (b.priority ?? 5) || a.distance - b.distance)
-      .slice(0, 12);
+      .slice(0, campus ? 18 : 12);
     const street = mapped.street;
     const results = [...lots, ...street];
-    const info = street.length ? `Showing named/estimated lots and verified mapped street parking within about ${minutes} minutes walking.` : `No verified mapped street-parking tags found here. Showing destination/customer lots and mapped lots first; verify all signs and access rules.`;
-    return res.status(200).json({ place, suggestions: [], results, sections: { lots, street }, radiusMinutes: minutes, radiusMiles, info, note: 'Availability is estimated until ParkLink sensors or live parking feeds are connected.' });
+    const info = campus
+      ? `Campus parking mode: showing named/ref campus lots and structures first. Unnamed mapped lots are lower priority because the map does not provide official lot names.`
+      : street.length ? `Showing named/estimated lots and verified mapped street parking within about ${minutes} minutes walking.` : `No verified mapped street-parking tags found here. Showing destination/customer lots and mapped lots first; verify all signs and access rules.`;
+    return res.status(200).json({ place, suggestions: [], results, sections: { lots, street }, radiusMinutes: minutes, radiusMiles, info, note: campus ? 'Campus restrictions are estimates from map tags. Verify official school permits, visitor payment, event restrictions, and signs.' : 'Availability is estimated until ParkLink sensors or live parking feeds are connected.' });
   } catch (error) {
     return res.status(200).json({ place: null, suggestions: [], results: [], sections: { lots: [], street: [] }, warning: error.message || 'Parking search failed.' });
   }
