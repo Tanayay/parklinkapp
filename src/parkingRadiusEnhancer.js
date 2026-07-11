@@ -17,7 +17,7 @@ window.fetch = (input, init) => {
     const raw = typeof input === 'string' ? input : input?.url;
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
-      url.pathname = '/api/parking-search-v2';
+      url.pathname = '/api/parking-search-v3';
       if (!url.searchParams.has('mode') || url.searchParams.get('mode') !== 'places') {
         url.searchParams.set('radiusMinutes', String(getRadiusMinutes()));
       }
@@ -25,7 +25,7 @@ window.fetch = (input, init) => {
       return originalFetch(next, init);
     }
   } catch {
-    // Fall through to the original request.
+    // Fall through to original request.
   }
   return originalFetch(input, init);
 };
