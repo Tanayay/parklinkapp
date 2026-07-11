@@ -9,6 +9,7 @@ import './parklink-map-fixes.css';
 import './parklink-final-fixes.css';
 import './parklink-personal.css';
 import './parking-radius.css';
+import './parklink-clean-ui.css';
 
 try {
   const savedUser = JSON.parse(localStorage.getItem('parklink-user') || 'null');
