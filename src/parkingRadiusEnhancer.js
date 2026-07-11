@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'parklink-parking-radius-minutes';
 const ADDRESS_KEY = 'parklink-search-address';
-const SEARCH_CACHE_KEY = 'parklink-stable-search-cache';
+const SEARCH_CACHE_KEY = 'parklink-v9-search-cache';
 const DEFAULT_MINUTES = 10;
 const VALID_MINUTES = [5, 10, 15, 20, 30];
 
@@ -38,7 +38,7 @@ window.fetch = async (input, init) => {
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
       const isPlaceSearch = url.searchParams.get('mode') === 'places';
-      url.pathname = isPlaceSearch ? '/api/place-search-stable' : '/api/parking-search-v7';
+      url.pathname = '/api/parking-search-v9';
       const ctx = getAddressContext();
       if (ctx) {
         if (ctx.lat && ctx.lng) { url.searchParams.set('homeLat', String(ctx.lat)); url.searchParams.set('homeLng', String(ctx.lng)); }
