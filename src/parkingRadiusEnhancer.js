@@ -42,7 +42,7 @@ window.fetch = async (input, init) => {
     if (raw && raw.includes('/api/parking-search')) {
       const url = new URL(raw, window.location.origin);
       const isPlaceSearch = url.searchParams.get('mode') === 'places';
-      url.pathname = isPlaceSearch ? '/api/place-search-fast' : '/api/parking-search-v7';
+      url.pathname = isPlaceSearch ? '/api/place-search-addressed' : '/api/parking-search-v7';
       const ctx = getAddressContext();
       if (ctx) {
         if (ctx.lat && ctx.lng) { url.searchParams.set('homeLat', String(ctx.lat)); url.searchParams.set('homeLng', String(ctx.lng)); }
@@ -142,8 +142,8 @@ function openAddressModal() {
     if (!city && !address) { error.textContent = 'Add at least a city, or use current location.'; return; }
     error.textContent = 'Saving search area...';
     try {
-      const params = new URLSearchParams({ mode: 'places', q: label });
-      const response = await originalFetch(`/api/place-search-fast?${params.toString()}`);
+      const params = new URLSearchParams({ q: label, homeText: label });
+      const response = await originalFetch(`/api/place-search-addressed?${params.toString()}`);
       const data = await response.json().catch(() => ({}));
       const place = data.place || data.suggestions?.[0];
       setAddressContext({ label: place?.address || label, address, city, state, lat: place?.lat, lng: place?.lng });
