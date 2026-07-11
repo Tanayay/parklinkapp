@@ -74,7 +74,7 @@
 }
 
 .ai-phone-safe .place-choice-list {
-  max-height: 285px;
+  max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;
   padding-right: 3px;
@@ -83,15 +83,23 @@
 .ai-phone-safe .place-choice-card {
   width: 100%;
   max-width: 100%;
-  align-items: flex-start;
+  min-height: 64px !important;
+  align-items: flex-start !important;
   background: rgba(11, 24, 48, .72) !important;
   border-color: rgba(148,163,184,.16) !important;
+  padding: 12px !important;
+}
+
+.ai-phone-safe .place-choice-card > div {
+  display: grid !important;
+  gap: 4px !important;
 }
 
 .ai-phone-safe .place-choice-card strong {
-  display: block;
+  display: block !important;
   color: rgba(255,255,255,.95);
   font-size: 14px;
+  line-height: 1.18;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -100,12 +108,14 @@
 
 .ai-phone-safe .place-choice-card span,
 .ai-phone-safe .place-choice-card small {
-  display: block;
-  margin-top: 3px;
-  color: rgba(203,213,225,.72);
-  font-size: 11px;
-  line-height: 1.25;
+  display: block !important;
+  min-height: 15px;
+  margin-top: 0;
+  color: rgba(203,213,225,.76) !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
   overflow-wrap: anywhere;
+  white-space: normal !important;
 }
 
 .parklink-address-modal {
